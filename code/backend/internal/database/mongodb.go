@@ -27,7 +27,7 @@ func (m *MongoDB) CreateUser(ctx context.Context, name, email string) (*User, er
 		UpdatedAt: now,
 	}
 
-	collection := m.Collections[CollectionUsers].Collection
+	collection := m.Collections[CollectionUsers]
 
 	_, err := collection.InsertOne(ctx, user)
 	if err != nil {

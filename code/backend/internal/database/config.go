@@ -21,11 +21,7 @@ const (
 type MongoDB struct {
 	Client      *mongo.Client
 	Database    *mongo.Database
-	Collections map[MongoDBCollection]*Collection
-}
-
-type Collection struct {
-	Collection *mongo.Collection
+	Collections map[MongoDBCollection]*mongo.Collection
 }
 
 type MongoDBOptions struct {
@@ -63,13 +59,9 @@ func New(ctx context.Context, config MongoDBOptions) (*MongoDB, error) {
 	return &MongoDB{
 		Client:   client,
 		Database: db,
-		Collections: map[MongoDBCollection]*Collection{
-			CollectionUsers: {
-				Collection: db.Collection(string(CollectionUsers)),
-			},
-			CollectionRequests: {
-				Collection: db.Collection(string(CollectionRequests)),
-			},
+		Collections: map[MongoDBCollection]*mongo.Collection{
+			CollectionUsers:    db.Collection(string(CollectionUsers)),
+			CollectionRequests: db.Collection(string(CollectionRequests)),
 		},
 	}, nil
 }
