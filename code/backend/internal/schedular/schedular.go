@@ -5,30 +5,29 @@ import (
 	"log"
 	"time"
 
-	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/database"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type Schedular struct {
 	ReqChan chan bson.ObjectID // channel to push request IDs in
-	Reqs database.Collection // requests collection
+	Reqs    *mongo.Collection  // requests collection
 }
 
-
-func NewSchedular(reqs database.Collection, reqChan chan bson.ObjectID) *Schedular {
+func NewSchedular(reqs *mongo.Collection, reqChan chan bson.ObjectID) *Schedular {
 	return &Schedular{
 		ReqChan: reqChan,
-		Reqs: reqs,
+		Reqs:    reqs,
 	}
 }
 
 // Runs every 5sec, queries database for requests with state = "PENDING" and attempts < 3, pushes ID to ReqChan
-func(s *Schedular) Run(ctx context.Context) {
+func (s *Schedular) Run(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {
-		select{
+		select {
 		case <-ticker.C:
 			err := s.findAndPushPendingReqs(ctx)
 			if err != nil {
@@ -41,13 +40,13 @@ func(s *Schedular) Run(ctx context.Context) {
 }
 
 // queries db, finds reqs with state = "PENDING" and attempts < 3, pushes them to ReqChan
-func (s *Schedular) findAndPushPendingReqs(ctx context.Context) error{
+func (s *Schedular) findAndPushPendingReqs(ctx context.Context) error {
 	filter := bson.M{
 		"status":   "PENDING",
 		"attempts": bson.M{"$lt": 3},
 	}
 
-	cursor, err := s.Reqs.Collection.Find(ctx, filter)
+	cursor, err := s.Reqs.Find(ctx, filter)
 	if err != nil {
 		return err
 	}

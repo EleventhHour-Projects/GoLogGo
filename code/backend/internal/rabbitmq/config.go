@@ -95,7 +95,7 @@ func New(options RabbitMQOptions) (*RabbitMQ, error) {
 }
 
 // Close closes the RabbitMQ connection, consumer, and publisher.
-func (r *RabbitMQ) Close() {
+func (r *RabbitMQ) Close() error {
 	if r.Consumer != nil {
 		r.Consumer.Close()
 	}
@@ -107,4 +107,5 @@ func (r *RabbitMQ) Close() {
 	if r.Conn != nil {
 		r.Conn.Close()
 	}
+	return nil
 }
