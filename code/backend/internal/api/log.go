@@ -2,7 +2,7 @@ package api
 
 import (
 	"bytes"
-	"encoding/json"
+
 	"io"
 	"net/http"
 
@@ -27,25 +27,17 @@ func (api *Config) LogHandler(req *notnet.Request, res *notnet.Response, claims 
 		})
 	}
 
-	payload := map[string]interface{}{
-		"received":       true,
-		"content_type":   req.HTTPRequest.Header.Get("Content-Type"),
-		"body_size":      len(body),
-		"status":         "accepted",
-		"source":         req.RemoteAddr(),
-		"request_method": req.Method(),
+	// Save the raw request to MongoDB.
+	logReq, err := api.Reqs.CreateReq(req.HTTPRequest.Context(), body)
+	if err != nil {
+		return res.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "failed to save log request",
+		})
 	}
 
-	// TODO: implement universal parser that accepts logs from network sources
-	// and normalizes them into a common internal log structure before storage.
-	var parsed interface{}
-	if err := json.Unmarshal(body, &parsed); err == nil {
-		payload["format"] = "json"
-		payload["parsed"] = parsed
-		return res.JSON(http.StatusAccepted, payload)
-	}
-
-	payload["format"] = "raw_text"
-	payload["raw_log"] = string(body)
-	return res.JSON(http.StatusAccepted, payload)
+	return res.JSON(http.StatusAccepted, map[string]interface{}{
+		"status": "accepted",
+		"id":     logReq.ID,
+	})
 }
+
