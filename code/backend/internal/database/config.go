@@ -80,7 +80,7 @@ func (m *MongoDB) GetPendingRequestIDs(ctx context.Context) ([]bson.ObjectID, er
 	collection := m.Collections[CollectionRequests]
 
 	filter := bson.M{
-		"status":   "pending",
+		"status":   StatusPending,
 		"attempts": bson.M{"$lt": 3},
 	}
 
