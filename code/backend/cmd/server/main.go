@@ -47,11 +47,14 @@ func main() {
 		log.Fatalf("failed to initialize mongodb: %v", err)
 	}
 	defer mongod.Close(ctx)
-	
+
+	// shared channel for schedular, all workers
+	const ChanSize = 1200
+	JobChan := make(chan bson.ObjectID, ChanSize)
 	// apiCfg init
 	apiCfg := api.Config{
 		Reqs: mongod,
-		JobChan: make(chan bson.ObjectID),
+		JobChan: JobChan,
 	}
 	
 	app := notnet.New(nil)
@@ -63,7 +66,7 @@ func main() {
 	app.POST("/log", auth.MiddlewareAuth(apiCfg.LogHandler))
 
 	// schedular init
-	sched := schedular.NewSchedular(mongod, make(chan bson.ObjectID))
+	sched := schedular.NewSchedular(mongod, JobChan)
 	go sched.Run(ctx)
 
 	fmt.Println("GoLogGo backend started successfully")
