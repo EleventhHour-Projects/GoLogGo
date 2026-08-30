@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -73,4 +74,39 @@ func (m *MongoDB) Close(ctx context.Context) error {
 	}
 
 	return m.Client.Disconnect(ctx)
+}
+
+func (m *MongoDB) GetPendingRequestIDs(ctx context.Context) ([]bson.ObjectID, error) {
+	collection := m.Collections[CollectionRequests]
+
+	filter := bson.M{
+		"status":   "pending",
+		"attempts": bson.M{"$lt": 3},
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var ids []bson.ObjectID
+
+	for cursor.Next(ctx) {
+		var request struct {
+			ID bson.ObjectID `bson:"_id"`
+		}
+
+		if err := cursor.Decode(&request); err != nil {
+			return nil, err
+		}
+
+		ids = append(ids, request.ID)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return ids, nil
 }

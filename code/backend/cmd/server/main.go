@@ -15,6 +15,7 @@ import (
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/database"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/rabbitmq"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/redis"
+	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/schedular"
 
 	"github.com/nottechdm/notnet/pkg/notnet"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -61,9 +62,9 @@ func main() {
 	})
 	app.POST("/log", auth.MiddlewareAuth(apiCfg.LogHandler))
 
-	// // schedular
-	// sched := schedular.NewSchedular(mongod.Collection("requests"), make(chan bson.ObjectID))
-	// go sched.Run(ctx)
+	// schedular init
+	sched := schedular.NewSchedular(mongod, make(chan bson.ObjectID))
+	go sched.Run(ctx)
 
 	fmt.Println("GoLogGo backend started successfully")
 	fmt.Printf("Redis connected: %v\n", os.Getenv("REDIS_URL"))
