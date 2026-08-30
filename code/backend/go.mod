@@ -4,6 +4,7 @@ go 1.26.5
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
+	github.com/nottechdm/notnet v1.0.4
 	github.com/redis/go-redis/v9 v9.22.0
 	github.com/wagslane/go-rabbitmq v0.16.1
 	go.mongodb.org/mongo-driver/v2 v2.8.2
@@ -12,7 +13,6 @@ require (
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/klauspost/compress v1.17.6 // indirect
-	github.com/nottechdm/notnet v1.0.4 // indirect
 	github.com/rabbitmq/amqp091-go v1.12.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.2.0 // indirect

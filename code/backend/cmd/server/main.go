@@ -11,9 +11,13 @@ import (
 	"time"
 
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/api"
+	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/auth"
+	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/database"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/rabbitmq"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/redis"
+
 	"github.com/nottechdm/notnet/pkg/notnet"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func main() {
@@ -32,12 +36,34 @@ func main() {
 		log.Fatalf("failed to initialize rabbitmq: %v", err)
 	}
 
+	// mongodb init
+	ctx := context.Background()
+	mongod, err := database.New(ctx, database.MongoDBOptions{
+		URI:          os.Getenv("MONGODB_URI"),
+		DatabaseName: os.Getenv("MONGODB_DATABASE_NAME"),
+	})
+	if err != nil {
+		log.Fatalf("failed to initialize mongodb: %v", err)
+	}
+	defer mongod.Close(ctx)
+	
+	// apiCfg init
+	apiCfg := api.Config{
+		Reqs: mongod,
+		JobChan: make(chan bson.ObjectID),
+	}
+	
 	app := notnet.New(nil)
 	app.Use(notnet.CORS(&notnet.CORSConfig{}))
-	api.RegisterRoutes(app)
+	app.Use(notnet.Logger(), notnet.Recovery())
 	app.GET("/health", func(req *notnet.Request, res *notnet.Response) error {
 		return res.JSON(200, map[string]string{"status": "ok"})
 	})
+	app.POST("/log", auth.MiddlewareAuth(apiCfg.LogHandler))
+
+	// // schedular
+	// sched := schedular.NewSchedular(mongod.Collection("requests"), make(chan bson.ObjectID))
+	// go sched.Run(ctx)
 
 	fmt.Println("GoLogGo backend started successfully")
 	fmt.Printf("Redis connected: %v\n", os.Getenv("REDIS_URL"))
