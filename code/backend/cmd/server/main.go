@@ -16,6 +16,7 @@ import (
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/rabbitmq"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/redis"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/schedular"
+	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/worker"
 
 	"github.com/nottechdm/notnet/pkg/notnet"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -51,12 +52,18 @@ func main() {
 	// shared channel for schedular, all workers
 	const ChanSize = 1200
 	JobChan := make(chan bson.ObjectID, ChanSize)
+
 	// apiCfg init
 	apiCfg := api.Config{
 		Reqs: mongod,
 		JobChan: JobChan,
 	}
-	
+
+	// worker pool init
+	numWorkers := 100 // worker-pool size
+	worker := worker.NewWorker(mongod, JobChan, numWorkers)
+	go worker.InitialiseWorkerPool(ctx) // concurrency core
+
 	app := notnet.New(nil)
 	app.Use(notnet.CORS(&notnet.CORSConfig{}))
 	app.Use(notnet.Logger(), notnet.Recovery())
