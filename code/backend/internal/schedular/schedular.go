@@ -5,16 +5,16 @@ import (
 	"log"
 	"time"
 
+	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/database"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type Schedular struct {
 	ReqChan chan bson.ObjectID // channel to push request IDs in
-	Reqs    *mongo.Collection  // requests collection
+	Reqs    *database.MongoDB  // requests collection
 }
 
-func NewSchedular(reqs *mongo.Collection, reqChan chan bson.ObjectID) *Schedular {
+func NewSchedular(reqs *database.MongoDB, reqChan chan bson.ObjectID) *Schedular {
 	return &Schedular{
 		ReqChan: reqChan,
 		Reqs:    reqs,
@@ -41,21 +41,14 @@ func (s *Schedular) Run(ctx context.Context) {
 
 // queries db, finds reqs with state = "PENDING" and attempts < 3, pushes them to ReqChan
 func (s *Schedular) findAndPushPendingReqs(ctx context.Context) error {
-	filter := bson.M{
-		"status":   "PENDING",
-		"attempts": bson.M{"$lt": 3},
-	}
-
-	cursor, err := s.Reqs.Find(ctx, filter)
+	ids, err := s.Reqs.GetPendingRequestIDs(ctx)
 	if err != nil {
+		log.Println("failed to get pending requests:", err)
 		return err
 	}
-	defer cursor.Close(ctx)
 
-	var reqIDs []bson.ObjectID
-	cursor.All(ctx, &reqIDs)
-	for _, reqID := range reqIDs {
-		s.ReqChan <- reqID
+	for _, id := range ids {
+		s.ReqChan <- id
 	}
 	return nil
 }
