@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/api"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/rabbitmq"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/redis"
+	"github.com/nottechdm/notnet/pkg/notnet"
 )
 
 func main() {
@@ -29,9 +32,22 @@ func main() {
 		log.Fatalf("failed to initialize rabbitmq: %v", err)
 	}
 
+	app := notnet.New(nil)
+	app.Use(notnet.CORS(&notnet.CORSConfig{}))
+	api.RegisterRoutes(app)
+	app.GET("/health", func(req *notnet.Request, res *notnet.Response) error {
+		return res.JSON(200, map[string]string{"status": "ok"})
+	})
+
 	fmt.Println("GoLogGo backend started successfully")
 	fmt.Printf("Redis connected: %v\n", os.Getenv("REDIS_URL"))
 	fmt.Printf("RabbitMQ connected: %v\n", os.Getenv("RABBITMQ_URL"))
+	log.Println("API server starting on :8080")
+
+	serverErrCh := make(chan error, 1)
+	go func() {
+		serverErrCh <- app.Listen(":8080")
+	}()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
@@ -40,6 +56,10 @@ func main() {
 	sig := <-sigCh
 	log.Printf("received signal %v, shutting down...", sig)
 
+	if err := app.Shutdown(); err != nil {
+		log.Printf("http shutdown error: %v", err)
+	}
+
 	// Give ongoing operations some time to finish.
 	shutdownCtx, cancel := context.WithTimeout(
 		context.Background(),
@@ -47,10 +67,7 @@ func main() {
 	)
 	defer cancel()
 
-	// Currently Close() doesn't take a context, so perform cleanup directly.
-	// The context can be passed to HTTP servers/workers later.
 	shutdownDone := make(chan struct{})
-
 	go func() {
 		defer close(shutdownDone)
 
@@ -66,9 +83,16 @@ func main() {
 	select {
 	case <-shutdownDone:
 		log.Println("shutdown completed successfully")
-
 	case <-shutdownCtx.Done():
 		log.Println("shutdown timed out")
+	}
+
+	select {
+	case err := <-serverErrCh:
+		if err != nil && err != http.ErrServerClosed {
+			log.Printf("http server error: %v", err)
+		}
+	default:
 	}
 
 	log.Println("GoLogGo backend stopped")
