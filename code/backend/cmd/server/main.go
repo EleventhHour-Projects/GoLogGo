@@ -70,6 +70,7 @@ func main() {
 	app.GET("/health", func(req *notnet.Request, res *notnet.Response) error {
 		return res.JSON(200, map[string]string{"status": "ok"})
 	})
+	app.POST("/user", apiCfg.HandlerUser)
 	app.POST("/log", auth.MiddlewareAuth(apiCfg.LogHandler))
 
 	// schedular init
