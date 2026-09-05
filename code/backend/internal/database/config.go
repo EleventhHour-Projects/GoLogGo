@@ -17,6 +17,9 @@ const (
 
 	// CollectionRequests is the name of the requests collection in MongoDB.
 	CollectionRequests MongoDBCollection = "requests"
+
+	// CollectionLogs is the name of the logs collection in MongoDB.
+	CollectionLogs MongoDBCollection = "logs"
 )
 
 type MongoDB struct {
@@ -63,6 +66,7 @@ func New(ctx context.Context, config MongoDBOptions) (*MongoDB, error) {
 		Collections: map[MongoDBCollection]*mongo.Collection{
 			CollectionUsers:    db.Collection(string(CollectionUsers)),
 			CollectionRequests: db.Collection(string(CollectionRequests)),
+			CollectionLogs:     db.Collection(string(CollectionLogs)),
 		},
 	}, nil
 }
