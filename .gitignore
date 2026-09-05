@@ -1,1 +1,7 @@
 code/backend/.env
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/

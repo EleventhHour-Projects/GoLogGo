@@ -61,7 +61,7 @@ func main() {
 
 	// worker pool init
 	numWorkers := 100 // worker-pool size
-	worker := worker.NewWorker(mongod, JobChan, numWorkers)
+	worker := worker.NewWorker(mongod, rdb, JobChan, numWorkers)
 	go worker.InitialiseWorkerPool(ctx) // concurrency core
 
 	app := notnet.New(nil)
@@ -70,6 +70,7 @@ func main() {
 	app.GET("/health", func(req *notnet.Request, res *notnet.Response) error {
 		return res.JSON(200, map[string]string{"status": "ok"})
 	})
+	app.POST("/user", apiCfg.HandlerUser)
 	app.POST("/log", auth.MiddlewareAuth(apiCfg.LogHandler))
 
 	// schedular init
