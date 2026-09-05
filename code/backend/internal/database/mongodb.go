@@ -36,13 +36,13 @@ type Log struct {
 	// UserID is a reference to the user who created the log entry. It can be nil if the log entry was created by the system.
 	UserID *bson.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
 	// IsDirect indicates whether the log entry was created directly by the user or directly through current machine.
-	IsDirect bool `bson:"is_direct" json:"is_direct"`
+	IsDirect bool `bson:"isDirect" json:"isDirect"`
 
 	ReqID            bson.ObjectID `bson:"reqId" json:"reqId"`
-	RequestCreatedAt time.Time     `bson:"request_created_at" json:"request_created_at"`
+	RequestCreatedAt time.Time     `bson:"requestCreatedAt" json:"requestCreatedAt"`
 
-	NormalizedLog NormalizedLog `bson:"normalized_log" json:"normalized_log"`
-	RawLog        []byte        `bson:"raw_log" json:"raw_log"`
+	NormalizedLog NormalizedLog `bson:"normalizedLog" json:"normalizedLog"`
+	RawLog        []byte        `bson:"rawLog" json:"rawLog"`
 	Hash          string        `bson:"hash" json:"hash"`
 	CreatedAt     time.Time     `bson:"createdAt" json:"createdAt"`
 }
