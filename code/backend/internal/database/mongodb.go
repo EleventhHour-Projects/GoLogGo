@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/parser"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -18,16 +19,17 @@ type User struct {
 
 // Req represents a request in the MongoDB database.
 type Req struct {
-	ID        bson.ObjectID `bson:"_id,omitempty" json:"id"`
-	Payload   []byte        `bson:"payload" json:"payload"`
-	Status    ReqestStatus  `bson:"status" json:"status"`
-	Attempts  int           `bson:"attempts" json:"attempts"`
-	CreatedAt time.Time     `bson:"createdAt" json:"createdAt"`
-	UpdatedAt time.Time     `bson:"updatedAt" json:"updatedAt"`
+	ID        bson.ObjectID  `bson:"_id,omitempty" json:"id"`
+	UserID    *bson.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
+	Payload   []byte         `bson:"payload" json:"payload"`
+	Status    ReqestStatus   `bson:"status" json:"status"`
+	Attempts  int            `bson:"attempts" json:"attempts"`
+	CreatedAt time.Time      `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time      `bson:"updatedAt" json:"updatedAt"`
 }
 
-// TODO: Define the structure of NormalizedLog based on your requirements.
-type NormalizedLog struct{}
+// NormalizedLog is an alias to parser.NormalizedLog.
+type NormalizedLog = parser.NormalizedLog
 
 // Log represents a log entry in the MongoDB database.
 type Log struct {
@@ -80,10 +82,11 @@ func (m *MongoDB) CreateUser(ctx context.Context, name, email string) (*User, er
 }
 
 // CreateReq creates a new request in the MongoDB database.
-func (m *MongoDB) CreateReq(ctx context.Context, payload []byte) (*Req, error) {
+func (m *MongoDB) CreateReq(ctx context.Context, payload []byte, userID *bson.ObjectID) (*Req, error) {
 	now := time.Now()
 	req := &Req{
 		ID:        bson.NewObjectID(),
+		UserID:    userID,
 		Payload:   payload,
 		Status:    StatusPending,
 		Attempts:  0,
@@ -163,12 +166,12 @@ func (m *MongoDB) DeleteReq(ctx context.Context, id bson.ObjectID) error {
 }
 
 // InsertLog inserts a new log entry into the MongoDB database.
-func (m *MongoDB) InsertLog(ctx context.Context, req Req, nlog NormalizedLog, isdirect bool, userID bson.ObjectID, hash string) error {
+func (m *MongoDB) InsertLog(ctx context.Context, req Req, nlog NormalizedLog, isdirect bool, userID *bson.ObjectID, hash string) error {
 	collection := m.Collections[CollectionLogs]
 
 	log := &Log{
 		ID:               bson.NewObjectID(),
-		UserID:           &userID,
+		UserID:           userID,
 		IsDirect:         isdirect,
 		ReqID:            req.ID,
 		RequestCreatedAt: req.CreatedAt,

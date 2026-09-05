@@ -61,7 +61,7 @@ func main() {
 
 	// worker pool init
 	numWorkers := 100 // worker-pool size
-	worker := worker.NewWorker(mongod, JobChan, numWorkers)
+	worker := worker.NewWorker(mongod, rdb, JobChan, numWorkers)
 	go worker.InitialiseWorkerPool(ctx) // concurrency core
 
 	app := notnet.New(nil)
