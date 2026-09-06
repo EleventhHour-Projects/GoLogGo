@@ -297,7 +297,7 @@ func TestParseLog_ErrorCases(t *testing.T) {
 	})
 
 	t.Run("log does not match pattern", func(t *testing.T) {
-		p := &Parser{Pattern: `^exact_match$` }
+		p := &Parser{Pattern: `^exact_match$`}
 		_, err := ParseLog("different text", p)
 		if err == nil {
 			t.Errorf("expected error when log doesn't match, got nil")
