@@ -51,7 +51,7 @@ func TestRequestParser_FastAPIServer(t *testing.T) {
 	}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/parse" {
+		if r.URL.Path != "/api/v1/generate-parser-rule" {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -74,6 +74,7 @@ func TestRequestParser_FastAPIServer(t *testing.T) {
 	}))
 	defer ts.Close()
 
+	// Test with baseURL (ts.URL)
 	client := NewClient(ts.URL)
 	rawLog := "2026-09-05T12:00:00Z Test log line"
 	features := fingerprint.FingerprintFeatures{Format: fingerprint.FormatPlainText}
@@ -85,5 +86,15 @@ func TestRequestParser_FastAPIServer(t *testing.T) {
 
 	if p.Pattern != expectedParser.Pattern {
 		t.Errorf("expected pattern %q, got %q", expectedParser.Pattern, p.Pattern)
+	}
+
+	// Test with full ML_API_URL (ts.URL + /api/v1/generate-parser-rule)
+	clientFull := NewClient(ts.URL + "/api/v1/generate-parser-rule")
+	pFull, err := clientFull.RequestParser(context.Background(), rawLog, features)
+	if err != nil {
+		t.Fatalf("unexpected error from FastAPI mock with full URL: %v", err)
+	}
+	if pFull.Pattern != expectedParser.Pattern {
+		t.Errorf("expected pattern %q, got %q", expectedParser.Pattern, pFull.Pattern)
 	}
 }

@@ -1,7 +1,12 @@
 code/backend/.env
+code/ml/.env
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
 bin/
+venv/
+.venv/
+__pycache__/
+*.py[cod]

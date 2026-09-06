@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -27,7 +28,11 @@ type ParseRequest struct {
 }
 
 // NewClient creates a new ML Client.
+// If baseURL is empty, it falls back to the ML_API_URL environment variable.
 func NewClient(baseURL string) *Client {
+	if baseURL == "" {
+		baseURL = os.Getenv("ML_API_URL")
+	}
 	return &Client{
 		BaseURL: baseURL,
 		HTTPClient: &http.Client{
@@ -60,7 +65,10 @@ func (c *Client) callFastAPI(ctx context.Context, rawLog string, features finger
 		return nil, fmt.Errorf("failed to marshal parse request: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/parse", strings.TrimRight(c.BaseURL, "/"))
+	url := strings.TrimRight(c.BaseURL, "/")
+	if !strings.HasSuffix(url, "/api/v1/generate-parser-rule") && !strings.HasSuffix(url, "/parse") {
+		url = fmt.Sprintf("%s/api/v1/generate-parser-rule", url)
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create http request: %w", err)
