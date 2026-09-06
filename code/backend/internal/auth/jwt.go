@@ -11,11 +11,11 @@ import (
 
 func GenerateToken(userID bson.ObjectID) (string, error) {
 	secret := os.Getenv("JWT_KEY")
-    if secret == "" {
-        return "", fmt.Errorf("JWT_KEY not set")
-    }
+	if secret == "" {
+		return "", fmt.Errorf("JWT_KEY not set")
+	}
 
-    jwtKey := []byte(secret)
+	jwtKey := []byte(secret)
 
 	// expiration time ~2 months
 	expirationTime := time.Now().Add(1440 * time.Hour)
@@ -45,19 +45,19 @@ func GenerateToken(userID bson.ObjectID) (string, error) {
 func ValidateToken(tokenString string) (*CustomClaims, error) {
 	// Parsing logic ensures the token is signed with the expected method (HMAC)
 	secret := os.Getenv("JWT_KEY")
-    if secret == "" {
-        return nil, fmt.Errorf("JWT_KEY not set")
-    }
+	if secret == "" {
+		return nil, fmt.Errorf("JWT_KEY not set")
+	}
 
-    jwtKey := []byte(secret)
-	
+	jwtKey := []byte(secret)
+
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return jwtKey, nil
 	})
-    
+
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func ValidateToken(tokenString string) (*CustomClaims, error) {
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok || !token.Valid {
 		return nil, fmt.Errorf("invalid token")
-	}	
+	}
 
 	if claims.Issuer != "go-auth-internal" {
 		return nil, fmt.Errorf("invalid issuer")

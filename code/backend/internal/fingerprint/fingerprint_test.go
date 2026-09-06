@@ -299,69 +299,69 @@ func TestVendorDistinctness(t *testing.T) {
 // TestRealWorldLogTypesEquivalence tests 10 distinct real-world log types and ensures volatile value invariance.
 func TestRealWorldLogTypesEquivalence(t *testing.T) {
 	tests := []struct {
-		name       string
-		log1       string
-		log2       string
+		name        string
+		log1        string
+		log2        string
 		expectedFmt FormatType
 	}{
 		{
-			name: "Cisco ASA Firewall",
-			log1: "%ASA-4-106023: Deny tcp src inside:10.0.0.1/52341 dst outside:8.8.8.8/443 by access-group acl_in [0x0, 0x0]",
-			log2: "%ASA-4-106023: Deny tcp src inside:172.16.1.50/49152 dst outside:1.1.1.1/80 by access-group acl_in [0x0, 0x0]",
+			name:        "Cisco ASA Firewall",
+			log1:        "%ASA-4-106023: Deny tcp src inside:10.0.0.1/52341 dst outside:8.8.8.8/443 by access-group acl_in [0x0, 0x0]",
+			log2:        "%ASA-4-106023: Deny tcp src inside:172.16.1.50/49152 dst outside:1.1.1.1/80 by access-group acl_in [0x0, 0x0]",
 			expectedFmt: FormatPlainText,
 		},
 		{
-			name: "Palo Alto PAN-OS Traffic CSV",
-			log1: "1,2026/08/30 13:02:11,001801000001,TRAFFIC,drop,1,2026/08/30 13:02:11,10.0.0.5,8.8.8.8,0.0.0.0,0.0.0.0,rule1,user1,,web-browsing,vsys1,trust,untrust,ethernet1/1,ethernet1/2,log_forward,2026/08/30 13:02:11,12345,1,52341,443,0,0,0x0,tcp,deny,100,100,0,1,2026/08/30 13:02:11,0,any,0,987654321,0x0,10.0.0.0-10.255.255.255,United States,0,1,0,drop,0,0,0,0,,PA-VM,from-policy",
-			log2: "1,2026/09/01 04:15:30,001801000002,TRAFFIC,drop,1,2026/09/01 04:15:30,192.168.1.50,1.1.1.1,0.0.0.0,0.0.0.0,rule1,user2,,web-browsing,vsys1,trust,untrust,ethernet1/1,ethernet1/2,log_forward,2026/09/01 04:15:30,67890,1,49152,80,0,0,0x0,tcp,deny,250,250,0,1,2026/09/01 04:15:30,0,any,0,123456789,0x0,192.168.0.0-192.168.255.255,Australia,0,1,0,drop,0,0,0,0,,PA-VM,from-policy",
+			name:        "Palo Alto PAN-OS Traffic CSV",
+			log1:        "1,2026/08/30 13:02:11,001801000001,TRAFFIC,drop,1,2026/08/30 13:02:11,10.0.0.5,8.8.8.8,0.0.0.0,0.0.0.0,rule1,user1,,web-browsing,vsys1,trust,untrust,ethernet1/1,ethernet1/2,log_forward,2026/08/30 13:02:11,12345,1,52341,443,0,0,0x0,tcp,deny,100,100,0,1,2026/08/30 13:02:11,0,any,0,987654321,0x0,10.0.0.0-10.255.255.255,United States,0,1,0,drop,0,0,0,0,,PA-VM,from-policy",
+			log2:        "1,2026/09/01 04:15:30,001801000002,TRAFFIC,drop,1,2026/09/01 04:15:30,192.168.1.50,1.1.1.1,0.0.0.0,0.0.0.0,rule1,user2,,web-browsing,vsys1,trust,untrust,ethernet1/1,ethernet1/2,log_forward,2026/09/01 04:15:30,67890,1,49152,80,0,0,0x0,tcp,deny,250,250,0,1,2026/09/01 04:15:30,0,any,0,123456789,0x0,192.168.0.0-192.168.255.255,Australia,0,1,0,drop,0,0,0,0,,PA-VM,from-policy",
 			expectedFmt: FormatCSV,
 		},
 		{
-			name: "Fortinet FortiGate Key-Value",
-			log1: `date=2026-08-30 time=13:02:11 devname=FG100D devid=FG100D3G15012345 logid="0000000013" type="traffic" subtype="forward" level="notice" vd="root" srcip=10.0.0.1 dstip=8.8.8.8 srcport=52341 dstport=443 action="deny" proto=6`,
-			log2: `date=2026-09-01 time=15:45:00 devname=FG100D devid=FG100D3G99999999 logid="0000000013" type="traffic" subtype="forward" level="notice" vd="root" srcip=172.16.0.2 dstip=1.1.1.1 srcport=49152 dstport=80 action="deny" proto=6`,
+			name:        "Fortinet FortiGate Key-Value",
+			log1:        `date=2026-08-30 time=13:02:11 devname=FG100D devid=FG100D3G15012345 logid="0000000013" type="traffic" subtype="forward" level="notice" vd="root" srcip=10.0.0.1 dstip=8.8.8.8 srcport=52341 dstport=443 action="deny" proto=6`,
+			log2:        `date=2026-09-01 time=15:45:00 devname=FG100D devid=FG100D3G99999999 logid="0000000013" type="traffic" subtype="forward" level="notice" vd="root" srcip=172.16.0.2 dstip=1.1.1.1 srcport=49152 dstport=80 action="deny" proto=6`,
 			expectedFmt: FormatKeyValue,
 		},
 		{
-			name: "AWS VPC Flow Log",
-			log1: "2 123456789010 eni-1235b678 172.31.16.139 172.31.16.21 20641 22 6 20 4249 1418530010 1418530070 ACCEPT OK",
-			log2: "2 123456789010 eni-8765a432 10.0.1.50 10.0.2.20 54321 22 6 15 3120 1418540010 1418540070 ACCEPT OK",
+			name:        "AWS VPC Flow Log",
+			log1:        "2 123456789010 eni-1235b678 172.31.16.139 172.31.16.21 20641 22 6 20 4249 1418530010 1418530070 ACCEPT OK",
+			log2:        "2 123456789010 eni-8765a432 10.0.1.50 10.0.2.20 54321 22 6 15 3120 1418540010 1418540070 ACCEPT OK",
 			expectedFmt: FormatPlainText,
 		},
 		{
-			name: "Linux SSHD RFC3164 Syslog",
-			log1: `<34>Aug 30 13:02:11 auth-server sshd[12345]: Accepted publickey for user admin from 10.0.0.5 port 52341 ssh2: RSA SHA256:abc1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef`,
-			log2: `<34>Sep  1 05:22:19 backup-host sshd[67890]: Accepted publickey for user guest from 192.168.1.50 port 49152 ssh2: RSA SHA256:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321`,
+			name:        "Linux SSHD RFC3164 Syslog",
+			log1:        `<34>Aug 30 13:02:11 auth-server sshd[12345]: Accepted publickey for user admin from 10.0.0.5 port 52341 ssh2: RSA SHA256:abc1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef`,
+			log2:        `<34>Sep  1 05:22:19 backup-host sshd[67890]: Accepted publickey for user guest from 192.168.1.50 port 49152 ssh2: RSA SHA256:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321`,
 			expectedFmt: FormatSyslog,
 		},
 		{
-			name: "Nginx Web Access Log",
-			log1: `10.0.0.5 - user_1 [30/Aug/2026:13:02:11 +0000] "GET /api/v1/users HTTP/1.1" 200 4523 "https://example.com/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"`,
-			log2: `192.168.1.10 - user_2 [01/Sep/2026:04:15:30 +0000] "GET /api/v1/users HTTP/1.1" 200 4523 "https://company.org/home" "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"`,
+			name:        "Nginx Web Access Log",
+			log1:        `10.0.0.5 - user_1 [30/Aug/2026:13:02:11 +0000] "GET /api/v1/users HTTP/1.1" 200 4523 "https://example.com/dashboard" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"`,
+			log2:        `192.168.1.10 - user_2 [01/Sep/2026:04:15:30 +0000] "GET /api/v1/users HTTP/1.1" 200 4523 "https://company.org/home" "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"`,
 			expectedFmt: FormatPlainText,
 		},
 		{
-			name: "ArcSight CEF Security Log",
-			log1: `CEF:0|CheckPoint|VPN-1 & FireWall-1|CheckPoint|drop|Drop|High|src=10.0.0.1 dst=8.8.8.8 spt=52341 dpt=443 proto=6 act=drop cs1=Rule1`,
-			log2: `CEF:0|CheckPoint|VPN-1 & FireWall-1|CheckPoint|drop|Drop|High|cs1=Rule1 act=drop proto=6 dpt=80 spt=49152 dst=1.1.1.1 src=192.168.1.20`,
+			name:        "ArcSight CEF Security Log",
+			log1:        `CEF:0|CheckPoint|VPN-1 & FireWall-1|CheckPoint|drop|Drop|High|src=10.0.0.1 dst=8.8.8.8 spt=52341 dpt=443 proto=6 act=drop cs1=Rule1`,
+			log2:        `CEF:0|CheckPoint|VPN-1 & FireWall-1|CheckPoint|drop|Drop|High|cs1=Rule1 act=drop proto=6 dpt=80 spt=49152 dst=1.1.1.1 src=192.168.1.20`,
 			expectedFmt: FormatCEF,
 		},
 		{
-			name: "IBM QRadar LEEF Log",
-			log1: `LEEF:2.0|Microsoft|MSExchange|2016|15.1.1466.3|x09|src=10.0.0.1	dst=192.168.1.2	usrName=user1@domain.com	sev=5`,
-			log2: `LEEF:2.0|Microsoft|MSExchange|2016|15.1.1466.3|x09|usrName=user2@company.org	sev=5	dst=172.16.0.5	src=10.20.30.40`,
+			name:        "IBM QRadar LEEF Log",
+			log1:        `LEEF:2.0|Microsoft|MSExchange|2016|15.1.1466.3|x09|src=10.0.0.1	dst=192.168.1.2	usrName=user1@domain.com	sev=5`,
+			log2:        `LEEF:2.0|Microsoft|MSExchange|2016|15.1.1466.3|x09|usrName=user2@company.org	sev=5	dst=172.16.0.5	src=10.20.30.40`,
 			expectedFmt: FormatLEEF,
 		},
 		{
-			name: "Windows Event XML",
-			log1: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4688</EventID><TimeCreated SystemTime="2026-08-30T13:02:11.000Z"/></System><EventData><Data Name="NewProcessName">C:\Windows\System32\cmd.exe</Data><Data Name="ProcessId">0x1234</Data></EventData></Event>`,
-			log2: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4688</EventID><TimeCreated SystemTime="2026-09-01T04:15:30.999Z"/></System><EventData><Data Name="NewProcessName">C:\Windows\System32\powershell.exe</Data><Data Name="ProcessId">0x5678</Data></EventData></Event>`,
+			name:        "Windows Event XML",
+			log1:        `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4688</EventID><TimeCreated SystemTime="2026-08-30T13:02:11.000Z"/></System><EventData><Data Name="NewProcessName">C:\Windows\System32\cmd.exe</Data><Data Name="ProcessId">0x1234</Data></EventData></Event>`,
+			log2:        `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><System><Provider Name="Microsoft-Windows-Security-Auditing"/><EventID>4688</EventID><TimeCreated SystemTime="2026-09-01T04:15:30.999Z"/></System><EventData><Data Name="NewProcessName">C:\Windows\System32\powershell.exe</Data><Data Name="ProcessId">0x5678</Data></EventData></Event>`,
 			expectedFmt: FormatXML,
 		},
 		{
-			name: "Java Application Stack Trace Multiline",
-			log1: "java.lang.IllegalArgumentException: Invalid transaction payload\n\tat com.payment.Gateway.execute(Gateway.java:105)\n\tat com.payment.Processor.handle(Processor.java:42)\nCaused by: java.io.IOException: Connection reset by peer\n\tat java.net.SocketInputStream.read(SocketInputStream.java:210)",
-			log2: "java.lang.IllegalArgumentException: Invalid transaction payload\n\tat com.payment.Gateway.execute(Gateway.java:210)\n\tat com.payment.Processor.handle(Processor.java:88)\nCaused by: java.io.IOException: Connection reset by peer\n\tat java.net.SocketInputStream.read(SocketInputStream.java:315)",
+			name:        "Java Application Stack Trace Multiline",
+			log1:        "java.lang.IllegalArgumentException: Invalid transaction payload\n\tat com.payment.Gateway.execute(Gateway.java:105)\n\tat com.payment.Processor.handle(Processor.java:42)\nCaused by: java.io.IOException: Connection reset by peer\n\tat java.net.SocketInputStream.read(SocketInputStream.java:210)",
+			log2:        "java.lang.IllegalArgumentException: Invalid transaction payload\n\tat com.payment.Gateway.execute(Gateway.java:210)\n\tat com.payment.Processor.handle(Processor.java:88)\nCaused by: java.io.IOException: Connection reset by peer\n\tat java.net.SocketInputStream.read(SocketInputStream.java:315)",
 			expectedFmt: FormatMultiline,
 		},
 	}

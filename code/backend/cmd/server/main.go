@@ -13,6 +13,7 @@ import (
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/api"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/auth"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/database"
+	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/parsergen"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/rabbitmq"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/redis"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/schedular"
@@ -55,14 +56,22 @@ func main() {
 
 	// apiCfg init
 	apiCfg := api.Config{
-		Reqs: mongod,
+		Reqs:    mongod,
 		JobChan: JobChan,
 	}
 
 	// worker pool init
 	numWorkers := 100 // worker-pool size
-	worker := worker.NewWorker(mongod, rdb, JobChan, numWorkers)
-	go worker.InitialiseWorkerPool(ctx) // concurrency core
+	workerPool := worker.NewWorker(mongod, rdb, rmq, JobChan, numWorkers)
+	go workerPool.InitialiseWorkerPool(ctx) // concurrency core
+
+	// parser generator consumer init
+	parserGen := parsergen.New(mongod, rdb, rmq, JobChan)
+	go func() {
+		if err := parserGen.Start(ctx); err != nil {
+			log.Printf("parser generator consumer stopped: %v", err)
+		}
+	}()
 
 	app := notnet.New(nil)
 	app.Use(notnet.CORS(&notnet.CORSConfig{}))

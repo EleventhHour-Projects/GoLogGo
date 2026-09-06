@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"sync"
+	"time"
 
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/database"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/fingerprint"
-	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/ml"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/parser"
+	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/parsergen"
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/redis"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -19,32 +19,20 @@ import (
 type Worker struct {
 	Reqs       *database.MongoDB
 	Redis      *redis.Redis
+	RMQ        MessagePublisher
 	JobChan    chan bson.ObjectID
 	numWorkers int
 	wg         sync.WaitGroup
-	MLClient   *ml.Client
 }
 
 // NewWorker instantiates a new Worker struct with required dependencies.
-func NewWorker(reqs *database.MongoDB, rdb *redis.Redis, jobChan chan bson.ObjectID, numWorkers int) *Worker {
-	mlURL := os.Getenv("ML_API_URL")
+func NewWorker(reqs *database.MongoDB, rdb *redis.Redis, rmq MessagePublisher, jobChan chan bson.ObjectID, numWorkers int) *Worker {
 	return &Worker{
 		Reqs:       reqs,
 		Redis:      rdb,
+		RMQ:        rmq,
 		JobChan:    jobChan,
 		numWorkers: numWorkers,
-		MLClient:   ml.NewClient(mlURL),
-	}
-}
-
-// NewWorkerWithML instantiates a Worker with a custom ML client (useful for testing and dependency injection).
-func NewWorkerWithML(reqs *database.MongoDB, rdb *redis.Redis, jobChan chan bson.ObjectID, numWorkers int, mlClient *ml.Client) *Worker {
-	return &Worker{
-		Reqs:       reqs,
-		Redis:      rdb,
-		JobChan:    jobChan,
-		numWorkers: numWorkers,
-		MLClient:   mlClient,
 	}
 }
 
@@ -77,9 +65,9 @@ func (w *Worker) Run(ctx context.Context) {
 	}
 }
 
-// processJob coordinates fetching, parsing, caching, and storing logs.
+// processJob coordinates fetching, fingerprinting, parser checking, parsing, and storing logs.
 func (w *Worker) processJob(ctx context.Context, jobID bson.ObjectID) error {
-	// 1. Get Log Entry from MongoDB requests collection
+	// 1. Fetch request from MongoDB requests collection
 	req, err := w.Reqs.FindReqByID(ctx, jobID)
 	if err != nil {
 		return fmt.Errorf("failed to find request %v: %w", jobID, err)
@@ -100,7 +88,7 @@ func (w *Worker) processJob(ctx context.Context, jobID bson.ObjectID) error {
 
 	var p *parser.Parser
 
-	// 4. Lookup Redis for key: parser:<hash>
+	// 4. Check Redis for key: parser:<hash>
 	if w.Redis != nil && w.Redis.Client != nil {
 		val, err := w.Redis.Client.Get(ctx, redisKey).Result()
 		if err == nil {
@@ -112,32 +100,65 @@ func (w *Worker) processJob(ctx context.Context, jobID bson.ObjectID) error {
 		}
 	}
 
-	// 5. If not found in Redis, call FastAPI ML service (or fallback dummy) to get a new parser
+	// 5. If parser doesn't exist:
+	//    - mark fingerprint as PENDING atomically
+	//    - only the worker that successfully creates PENDING publishes a RabbitMQ parser-generation job
+	//    - mark request as waiting for parser
+	//    - DO NOT call ML
 	if p == nil {
-		log.Printf("Parser cache miss for key %s, requesting from ML service", redisKey)
-		if w.MLClient == nil {
-			w.MLClient = ml.NewClient(os.Getenv("ML_API_URL"))
+		log.Printf("Parser not found for hash %s, queuing for parser generation", hash)
+
+		statusKey := fmt.Sprintf("fingerprint:status:%s", hash)
+		pendingJobsKey := fmt.Sprintf("fingerprint:pending_jobs:%s", hash)
+
+		var acquiredPendingLock bool
+		if w.Redis != nil && w.Redis.Client != nil {
+			// Atomically set fingerprint status to PENDING with a 5-minute TTL
+			ok, setErr := w.Redis.Client.SetNX(ctx, statusKey, "PENDING", 5*time.Minute).Result()
+			if setErr != nil {
+				log.Printf("Warning: failed to set atomic pending status in Redis for %s: %v", hash, setErr)
+			} else {
+				acquiredPendingLock = ok
+			}
+
+			// Track this request as waiting for the parser
+			if err := w.Redis.Client.SAdd(ctx, pendingJobsKey, jobID.Hex()).Err(); err != nil {
+				log.Printf("Warning: failed to add job %v to pending jobs set: %v", jobID, err)
+			}
+			_ = w.Redis.Client.Expire(ctx, pendingJobsKey, 10*time.Minute)
+		} else {
+			// Fallback if redis is nil (e.g. testing without redis)
+			acquiredPendingLock = true
 		}
 
-		newParser, mlErr := w.MLClient.RequestParser(ctx, rawLog, features)
-		if mlErr != nil {
-			_ = w.Reqs.IncrementReqAttempts(ctx, jobID)
-			_ = w.Reqs.UpdateReqStatus(ctx, jobID, database.StatusFailed)
-			return fmt.Errorf("failed to fetch parser from ML service: %w", mlErr)
-		}
-
-		p = newParser
-
-		// Save new parser format to Redis under parser:<hash>
-		if w.Redis != nil && w.Redis.Client != nil && p != nil {
-			if parserJSON, err := json.Marshal(p); err == nil {
-				if setErr := w.Redis.Client.Set(ctx, redisKey, parserJSON, 0).Err(); setErr != nil {
-					log.Printf("Warning: failed to cache parser in Redis for key %s: %v", redisKey, setErr)
-				} else {
-					log.Printf("Successfully cached new parser in Redis for key %s", redisKey)
+		// Only the worker that successfully created PENDING publishes the RabbitMQ job
+		if acquiredPendingLock && w.RMQ != nil {
+			msg := parsergen.ParserGenMessage{
+				Hash:     hash,
+				RawLog:   rawLog,
+				Features: features,
+			}
+			msgBytes, jsonErr := json.Marshal(msg)
+			if jsonErr == nil {
+				if pubErr := w.RMQ.PublishMessage(ctx, msgBytes); pubErr != nil {
+					log.Printf("Failed to publish parser-generation job to RabbitMQ for hash %s: %v", hash, pubErr)
+					if w.Redis != nil && w.Redis.Client != nil {
+						w.Redis.Client.Del(ctx, statusKey)
+					}
+					_ = w.Reqs.IncrementReqAttempts(ctx, jobID)
+					_ = w.Reqs.UpdateReqStatus(ctx, jobID, database.StatusFailed)
+					return fmt.Errorf("failed to publish parser-generation job: %w", pubErr)
 				}
+				log.Printf("Successfully published parser-generation job to RabbitMQ for hash %s", hash)
 			}
 		}
+
+		// Mark request as waiting for parser
+		if err := w.Reqs.UpdateReqStatus(ctx, jobID, database.StatusWaitingParser); err != nil {
+			return fmt.Errorf("failed to update request status to waiting_parser for %v: %w", jobID, err)
+		}
+
+		return nil
 	}
 
 	// 6. Normalize the raw log using the parser engine

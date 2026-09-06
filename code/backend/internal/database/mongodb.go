@@ -54,10 +54,11 @@ type ReqestStatus string
 
 // Define constants for request statuses
 const (
-	StatusPending    ReqestStatus = "pending"
-	StatusProcessing ReqestStatus = "processing"
-	StatusCompleted  ReqestStatus = "completed"
-	StatusFailed     ReqestStatus = "failed"
+	StatusPending       ReqestStatus = "pending"
+	StatusProcessing    ReqestStatus = "processing"
+	StatusWaitingParser ReqestStatus = "waiting_parser"
+	StatusCompleted     ReqestStatus = "completed"
+	StatusFailed        ReqestStatus = "failed"
 )
 
 // CreateUser creates a new user in the MongoDB database.

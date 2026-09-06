@@ -45,7 +45,7 @@ var (
 	dynamicTokenRegex = regexp.MustCompile(`(?i)\b[a-z]+[-_][0-9a-z]*\d[0-9a-z]*(?:[-_][0-9a-z]+)*\b|\b[0-9a-z]*\d[0-9a-z]*[-_][a-z]+[-_][0-9a-z]+\b`)
 
 	// Standalone numbers / counters / sequence numbers / epoch timestamps (10 to 13 digits).
-	epochMsRegex  = regexp.MustCompile(`\b1[4-9]\d{11,12}\b`) // 13-digit epoch ms
+	epochMsRegex  = regexp.MustCompile(`\b1[4-9]\d{11,12}\b`)       // 13-digit epoch ms
 	epochSecRegex = regexp.MustCompile(`\b1[4-9]\d{8}(?:\.\d+)?\b`) // 10-digit epoch sec
 
 	// Volatile entities: users, hosts, ports, ssh keys, web log user and user-agent in message context
