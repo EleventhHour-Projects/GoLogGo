@@ -11,6 +11,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      ml:
+        condition: service_healthy
     env_file:
       - ./code/backend/.env
     environment:
@@ -19,8 +21,28 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/gologgo?authSource=admin}
       MONGODB_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-gologgo}
+      ML_API_URL: ${ML_API_URL:-http://ml:8000/api/v1/generate-parser-rule}
     ports:
       - "${PORT:-8080}:8080"
+    restart: unless-stopped
+
+  ml:
+    build:
+      context: ./code/ml
+      dockerfile: Dockerfile
+    container_name: gologgo-ml
+    env_file:
+      - ./code/ml/.env
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     restart: unless-stopped
 
   rabbitmq:
