@@ -9,8 +9,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      mongodb:
-        condition: service_healthy
       ml:
         condition: service_healthy
     env_file:
@@ -19,7 +17,7 @@ services:
       PORT: ${PORT:-8080}
       RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/gologgo?authSource=admin}
+      MONGODB_URI: ${MONGODB_URI}
       MONGODB_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-gologgo}
       ML_API_URL: ${ML_API_URL:-http://ml:8000/api/v1/generate-parser-rule}
     ports:
@@ -83,27 +81,6 @@ services:
       retries: 10
     restart: unless-stopped
 
-  mongodb:
-    image: mongo:7
-    container_name: gologgo-mongodb
-    env_file:
-      - ./code/backend/.env
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-password}
-      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-gologgo}
-    ports:
-      - "${MONGODB_PORT:-27017}:27017"
-    volumes:
-      - mongodb_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
-      interval: 10s
-      timeout: 10s
-      retries: 12
-    restart: unless-stopped
-
 volumes:
   rabbitmq_data:
   redis_data:
-  mongodb_data:
