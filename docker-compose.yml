@@ -13,15 +13,8 @@ services:
         condition: service_healthy
     env_file:
       - ./code/backend/.env
-    environment:
-      PORT: ${PORT:-8080}
-      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      MONGODB_URI: ${MONGODB_URI}
-      MONGODB_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-gologgo}
-      ML_API_URL: ${ML_API_URL:-http://ml:8000/api/v1/generate-parser-rule}
     ports:
-      - "${PORT:-8080}:8080"
+      - "8080:8080"
     restart: unless-stopped
 
   ml:
@@ -31,8 +24,6 @@ services:
     container_name: gologgo-ml
     env_file:
       - ./code/ml/.env
-    environment:
-      GROQ_API_KEY: ${GROQ_API_KEY}
     ports:
       - "8000:8000"
     healthcheck:
@@ -49,12 +40,8 @@ services:
     env_file:
       - ./code/backend/.env
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -70,7 +57,7 @@ services:
     env_file:
       - ./code/backend/.env
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "6379:6379"
     command: ["redis-server", "--appendonly", "yes", "--protected-mode", "no"]
     volumes:
       - redis_data:/data
@@ -84,3 +71,4 @@ services:
 volumes:
   rabbitmq_data:
   redis_data:
+
