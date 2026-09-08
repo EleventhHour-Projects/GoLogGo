@@ -189,3 +189,217 @@ func (m *MongoDB) InsertLog(ctx context.Context, req Req, nlog NormalizedLog, is
 
 	return nil
 }
+
+// ParserDoc represents a parser document stored in MongoDB.
+type ParserDoc struct {
+	ID              bson.ObjectID                    `bson:"_id,omitempty" json:"id"`
+	Name            string                           `bson:"name" json:"name"`
+	Hash            string                           `bson:"hash" json:"hash"`
+	Pattern         string                           `bson:"pattern" json:"pattern"`
+	Mapping         map[string]string                `bson:"mapping" json:"mapping"`
+	Transformations map[string]parser.Transformation `bson:"transformations,omitempty" json:"transformations,omitempty"`
+	Status          string                           `bson:"status" json:"status"`
+	Format          string                           `bson:"format" json:"format"`
+	Vendor          string                           `bson:"vendor,omitempty" json:"vendor,omitempty"`
+	Product         string                           `bson:"product,omitempty" json:"product,omitempty"`
+	Template        string                           `bson:"template,omitempty" json:"template,omitempty"`
+	Delimiter       string                           `bson:"delimiter,omitempty" json:"delimiter,omitempty"`
+	ExtractedFields []string                         `bson:"extractedFields,omitempty" json:"extractedFields,omitempty"`
+	FieldSignatures []map[string]string              `bson:"fieldSignatures,omitempty" json:"fieldSignatures,omitempty"`
+	SampleLog       string                           `bson:"sampleLog,omitempty" json:"sampleLog,omitempty"`
+	LogsProcessed   int64                            `bson:"logsProcessed" json:"logsProcessed"`
+	LastUsed        time.Time                        `bson:"lastUsed" json:"lastUsed"`
+	CreatedAt       time.Time                        `bson:"createdAt" json:"createdAt"`
+	UpdatedAt       time.Time                        `bson:"updatedAt" json:"updatedAt"`
+}
+
+// SaveParser inserts or updates a parser in MongoDB by Hash.
+func (m *MongoDB) SaveParser(ctx context.Context, p *ParserDoc) (*ParserDoc, error) {
+	collection := m.Collections[CollectionParsers]
+	now := time.Now()
+
+	if p.Name == "" {
+		if p.Product != "" {
+			p.Name = p.Product + "Parser"
+		} else if p.Vendor != "" {
+			p.Name = p.Vendor + "Parser"
+		} else if p.Format != "" && p.Format != "unknown" {
+			p.Name = p.Format + "Parser"
+		} else if len(p.Hash) >= 8 {
+			p.Name = "Parser-" + p.Hash[:8]
+		} else {
+			p.Name = "CustomParser"
+		}
+	}
+	if p.Status == "" {
+		p.Status = "Active"
+	}
+	if p.Format == "" {
+		p.Format = "Custom"
+	}
+
+	var existing ParserDoc
+	err := collection.FindOne(ctx, bson.M{"hash": p.Hash}).Decode(&existing)
+	if err == nil {
+		// Update existing
+		updateFields := bson.M{
+			"pattern":         p.Pattern,
+			"mapping":         p.Mapping,
+			"transformations": p.Transformations,
+			"format":          p.Format,
+			"updatedAt":       now,
+		}
+		if p.Vendor != "" {
+			updateFields["vendor"] = p.Vendor
+		}
+		if p.Product != "" {
+			updateFields["product"] = p.Product
+		}
+		if p.Template != "" {
+			updateFields["template"] = p.Template
+		}
+		if p.Delimiter != "" {
+			updateFields["delimiter"] = p.Delimiter
+		}
+		if len(p.ExtractedFields) > 0 {
+			updateFields["extractedFields"] = p.ExtractedFields
+		}
+		if len(p.FieldSignatures) > 0 {
+			updateFields["fieldSignatures"] = p.FieldSignatures
+		}
+		if p.SampleLog != "" {
+			updateFields["sampleLog"] = p.SampleLog
+		}
+		// If existing parser had a custom name, preserve it unless explicitly overwritten
+		if existing.Name != "" && (p.Name == "" || p.Name == "CustomParser" || (len(p.Hash) >= 8 && p.Name == "Parser-"+p.Hash[:8])) {
+			p.Name = existing.Name
+		} else if p.Name != "" {
+			updateFields["name"] = p.Name
+		}
+		if p.Status != "" {
+			updateFields["status"] = p.Status
+		}
+
+		_, err = collection.UpdateOne(ctx, bson.M{"_id": existing.ID}, bson.M{"$set": updateFields})
+		if err != nil {
+			return nil, err
+		}
+		existing.Pattern = p.Pattern
+		existing.Mapping = p.Mapping
+		existing.Transformations = p.Transformations
+		existing.Format = p.Format
+		existing.Vendor = p.Vendor
+		existing.Product = p.Product
+		existing.Template = p.Template
+		existing.Delimiter = p.Delimiter
+		existing.ExtractedFields = p.ExtractedFields
+		existing.FieldSignatures = p.FieldSignatures
+		existing.UpdatedAt = now
+		if p.SampleLog != "" {
+			existing.SampleLog = p.SampleLog
+		}
+		return &existing, nil
+	}
+
+	// Insert new
+	p.ID = bson.NewObjectID()
+	p.CreatedAt = now
+	p.UpdatedAt = now
+	p.LastUsed = now
+
+	_, err = collection.InsertOne(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+// FindParserByHash finds a parser by its hash.
+func (m *MongoDB) FindParserByHash(ctx context.Context, hash string) (*ParserDoc, error) {
+	collection := m.Collections[CollectionParsers]
+	var p ParserDoc
+	err := collection.FindOne(ctx, bson.M{"hash": hash}).Decode(&p)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+// FindParserByID finds a parser by its ObjectID.
+func (m *MongoDB) FindParserByID(ctx context.Context, id bson.ObjectID) (*ParserDoc, error) {
+	collection := m.Collections[CollectionParsers]
+	var p ParserDoc
+	err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&p)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+// FindAllParsers retrieves all parsers.
+func (m *MongoDB) FindAllParsers(ctx context.Context) ([]ParserDoc, error) {
+	collection := m.Collections[CollectionParsers]
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var parsers []ParserDoc
+	for cursor.Next(ctx) {
+		var p ParserDoc
+		if err := cursor.Decode(&p); err != nil {
+			return nil, err
+		}
+		parsers = append(parsers, p)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	if parsers == nil {
+		parsers = []ParserDoc{}
+	}
+
+	return parsers, nil
+}
+
+// UpdateParser updates parser name, format, or status by ID.
+func (m *MongoDB) UpdateParser(ctx context.Context, id bson.ObjectID, name, format, status string) (*ParserDoc, error) {
+	collection := m.Collections[CollectionParsers]
+	update := bson.M{"updatedAt": time.Now()}
+
+	if name != "" {
+		update["name"] = name
+	}
+	if format != "" {
+		update["format"] = format
+	}
+	if status != "" {
+		update["status"] = status
+	}
+
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": update})
+	if err != nil {
+		return nil, err
+	}
+
+	return m.FindParserByID(ctx, id)
+}
+
+// IncrementParserLogsProcessed increments logsProcessed count and sets lastUsed timestamp.
+func (m *MongoDB) IncrementParserLogsProcessed(ctx context.Context, hash string) error {
+	collection := m.Collections[CollectionParsers]
+	_, err := collection.UpdateOne(
+		ctx,
+		bson.M{"hash": hash},
+		bson.M{
+			"$inc": bson.M{"logsProcessed": 1},
+			"$set": bson.M{"lastUsed": time.Now()},
+		},
+	)
+	return err
+}
+
