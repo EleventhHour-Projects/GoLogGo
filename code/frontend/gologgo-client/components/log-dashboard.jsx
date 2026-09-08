@@ -49,6 +49,35 @@ export function LogDashboard() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const max = parserData[0].count
+  const [rawLogs, setRawLogs] = useState('')
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const handleClearLogs = () => setRawLogs('')
+  const handleProcessLogs = async () => {
+    if (!rawLogs.trim()) return;
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain'
+        },
+        body: rawLogs
+      });
+      if (res.ok) {
+        setRawLogs('');
+        alert('Logs successfully sent for processing!');
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Failed to process logs: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred while sending logs.');
+    } finally {
+      setIsProcessing(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -64,6 +93,32 @@ export function LogDashboard() {
           <section aria-label="Log metrics" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[['Total Logs', '24,521', '+12.4%', Database], ['Parsed Logs', '23,891', '+8.2%', BarChart3], ['Unknown Logs', '630', '-3.1%', CircleHelp], ['Error Logs', '42', '+2.4%', CircleHelp]].map(([label, value, trend, Icon]) => <Card key={label} className="gap-3 py-4"><CardContent className="px-4"><div className="flex items-center justify-between"><p className="text-xs text-muted-foreground">{label}</p><Icon className="size-4 text-muted-foreground/70" /></div><div className="mt-2 flex items-end justify-between gap-2"><p className="font-mono text-xl font-medium tracking-tight">{value}</p><span className="text-xs text-muted-foreground">{trend}</span></div></CardContent></Card>)}
           </section>
+
+          <Card className="mt-5">
+            <CardHeader className="border-b border-border px-5 py-4">
+              <div>
+                <CardTitle className="text-sm font-medium">Add Logs</CardTitle>
+                <p className="mt-1 text-xs text-muted-foreground">Paste your logs below to process them.</p>
+              </div>
+            </CardHeader>
+            <CardContent className="px-5 py-6">
+              <textarea
+                className="w-full min-h-[160px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30 font-mono resize-y"
+                placeholder={`Paste your log entries here...\n\n2024-09-09 10:15:23 [INFO] user-service - User registered\n2024-09-09 10:15:24 [ERROR] database - Connection timeout\n2024-09-09 10:15:25 [WARN] nginx - Invalid request`}
+                value={rawLogs}
+                onChange={(e) => setRawLogs(e.target.value)}
+              />
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <p className="text-xs text-muted-foreground">Supports plain text logs. Each line will be processed separately.</p>
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  <Button variant="outline" size="sm" onClick={handleClearLogs} disabled={isProcessing}>Clear</Button>
+                  <Button size="sm" onClick={handleProcessLogs} disabled={isProcessing}>
+                    {isProcessing ? 'Processing...' : 'Process Logs'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card className="mt-5"><CardHeader className="flex-row items-center justify-between border-b border-border px-5 py-4"><div><CardTitle className="text-sm font-medium">Log Parsing Overview</CardTitle><p className="mt-1 text-xs text-muted-foreground">Successfully processed logs by parser</p></div><div className="relative"><Button variant="outline" size="sm" className="gap-2 sm:hidden" onClick={() => setMenuOpen(!menuOpen)}>{range}<ChevronDown className="size-3.5" /></Button><Button variant="outline" size="sm" className="hidden gap-2 sm:flex" onClick={() => setMenuOpen(!menuOpen)}>{range}<ChevronDown className="size-3.5" /></Button></div></CardHeader><CardContent className="px-5 py-6"><div className="flex flex-col gap-4">{parserData.map((item) => <div key={item.name} className="grid grid-cols-[80px_1fr_52px] items-center gap-3 text-sm sm:grid-cols-[110px_1fr_64px]"><span className="text-muted-foreground">{item.name}</span><div className="h-2 overflow-hidden rounded-sm bg-accent"><div className="h-full rounded-sm bg-primary/75" style={{ width: `${(item.count / max) * 100}%` }} /></div><span className="text-right font-mono text-xs text-muted-foreground">{item.count.toLocaleString()}</span></div>)}</div></CardContent></Card>
 

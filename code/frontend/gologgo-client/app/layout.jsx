@@ -38,7 +38,7 @@ export default function RootLayout({ children }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: `try { const theme = localStorage.getItem('log-ai-theme'); if (theme === 'light') document.documentElement.className = 'light'; } catch (_) {}` }} />
       </head>
-      <body className="antialiased">
+      <body className="antialiased" suppressHydrationWarning>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

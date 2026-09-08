@@ -5,28 +5,24 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
+    const rawText = await request.text();
 
     // Get the JWT from the HttpOnly cookie
     const cookieStore = await cookies();
     const tokenCookie = cookieStore.get('tokenString');
     const token = tokenCookie?.value;
 
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized: No token found' },
-        { status: 401 }
-      );
-    }
+    // Fallback to "test" auth header for development if no token is found
+    const authHeader = token ? `Bearer ${token}` : 'test';
 
     // Send the logs to the Go backend
-    const backendRes = await fetch(`${BACKEND_URL}/logs`, {
+    const backendRes = await fetch(`${BACKEND_URL}/log`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'text/plain',
+        'Authorization': authHeader
       },
-      body: JSON.stringify(body),
+      body: rawText,
     });
 
     if (!backendRes.ok) {
