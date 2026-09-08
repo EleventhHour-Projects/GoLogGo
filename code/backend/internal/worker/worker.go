@@ -100,6 +100,24 @@ func (w *Worker) processJob(ctx context.Context, jobID bson.ObjectID) error {
 		}
 	}
 
+	// 4b. If missing in Redis, check MongoDB parsers collection
+	if p == nil && w.Reqs != nil {
+		doc, err := w.Reqs.FindParserByHash(ctx, hash)
+		if err == nil && doc != nil && doc.Pattern != "" {
+			p = &parser.Parser{
+				Pattern:         doc.Pattern,
+				Mapping:         doc.Mapping,
+				Transformations: doc.Transformations,
+			}
+			log.Printf("Parser found in MongoDB for hash %s, caching in Redis", hash)
+			if w.Redis != nil && w.Redis.Client != nil {
+				if parserJSON, err := json.Marshal(p); err == nil {
+					_ = w.Redis.Client.Set(ctx, redisKey, parserJSON, 0).Err()
+				}
+			}
+		}
+	}
+
 	// 5. If parser doesn't exist:
 	//    - mark fingerprint as PENDING atomically
 	//    - only the worker that successfully creates PENDING publishes a RabbitMQ parser-generation job
@@ -176,6 +194,9 @@ func (w *Worker) processJob(ctx context.Context, jobID bson.ObjectID) error {
 		_ = w.Reqs.UpdateReqStatus(ctx, jobID, database.StatusFailed)
 		return fmt.Errorf("failed to insert normalized log to database for %v: %w", jobID, err)
 	}
+
+	// Increment processed logs count for this parser in MongoDB
+	_ = w.Reqs.IncrementParserLogsProcessed(ctx, hash)
 
 	// 8. Update request status to "completed"
 	err = w.Reqs.UpdateReqStatus(ctx, jobID, database.StatusCompleted)

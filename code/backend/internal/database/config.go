@@ -20,6 +20,9 @@ const (
 
 	// CollectionLogs is the name of the logs collection in MongoDB.
 	CollectionLogs MongoDBCollection = "logs"
+
+	// CollectionParsers is the name of the parsers collection in MongoDB.
+	CollectionParsers MongoDBCollection = "parsers"
 )
 
 type MongoDB struct {
@@ -67,6 +70,7 @@ func New(ctx context.Context, config MongoDBOptions) (*MongoDB, error) {
 			CollectionUsers:    db.Collection(string(CollectionUsers)),
 			CollectionRequests: db.Collection(string(CollectionRequests)),
 			CollectionLogs:     db.Collection(string(CollectionLogs)),
+			CollectionParsers:  db.Collection(string(CollectionParsers)),
 		},
 	}, nil
 }

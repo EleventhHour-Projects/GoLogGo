@@ -116,7 +116,52 @@ func (pg *ParserGenerator) ProcessMessage(ctx context.Context, body []byte) erro
 		return fmt.Errorf("failed to generate parser from ML service: %w", err)
 	}
 
-	// 4. Save parser to Redis/storage
+	// 4. Save parser to MongoDB & Redis/storage
+	if newParser != nil && pg.Reqs != nil {
+		formatName := "Custom"
+		if msg.Features.Format != "" && msg.Features.Format != "unknown" {
+			formatName = string(msg.Features.Format)
+		}
+
+		var signatures []map[string]string
+		for _, sig := range msg.Features.FieldSignatures {
+			signatures = append(signatures, map[string]string{
+				"key":  sig.Key,
+				"type": string(sig.Type),
+			})
+		}
+
+		var extracted []string
+		if len(msg.Features.Keys) > 0 {
+			extracted = msg.Features.Keys
+		} else {
+			for k := range newParser.Mapping {
+				extracted = append(extracted, k)
+			}
+		}
+
+		doc := database.ParserDoc{
+			Hash:            msg.Hash,
+			Pattern:         newParser.Pattern,
+			Mapping:         newParser.Mapping,
+			Transformations: newParser.Transformations,
+			Status:          "Active",
+			Format:          formatName,
+			Vendor:          msg.Features.VendorHint,
+			Product:         msg.Features.ProductHint,
+			Template:        msg.Features.Template,
+			Delimiter:       msg.Features.Delimiter,
+			ExtractedFields: extracted,
+			FieldSignatures: signatures,
+			SampleLog:       msg.RawLog,
+		}
+		if _, dbErr := pg.Reqs.SaveParser(ctx, &doc); dbErr != nil {
+			log.Printf("ParserGenerator: warning: failed to save parser to MongoDB for hash %s: %v", msg.Hash, dbErr)
+		} else {
+			log.Printf("ParserGenerator: successfully saved parser to MongoDB for hash %s", msg.Hash)
+		}
+	}
+
 	if pg.Redis != nil && pg.Redis.Client != nil && newParser != nil {
 		parserJSON, err := json.Marshal(newParser)
 		if err == nil {
