@@ -12,15 +12,19 @@ export async function POST(request) {
     const tokenCookie = cookieStore.get('tokenString');
     const token = tokenCookie?.value;
 
-    // Fallback to "test" auth header for development if no token is found
-    const authHeader = token ? `Bearer ${token}` : 'test';
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized: No token found' },
+        { status: 401 }
+      );
+    }
 
     // Send the logs to the Go backend
     const backendRes = await fetch(`${BACKEND_URL}/log`, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain',
-        'Authorization': authHeader
+        'Authorization': `Bearer ${token}`
       },
       body: rawText,
     });
