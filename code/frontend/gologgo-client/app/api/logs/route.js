@@ -56,3 +56,51 @@ export async function POST(request) {
     );
   }
 }
+
+export async function GET(request) {
+  try {
+    const cookieStore = await cookies();
+    const tokenCookie = cookieStore.get('tokenString');
+    const token = tokenCookie?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized: No token found' },
+        { status: 401 }
+      );
+    }
+
+    // Forward query params (page, limit, status) to the Go backend
+    const { searchParams } = new URL(request.url);
+    const queryString = searchParams.toString();
+
+    const backendRes = await fetch(
+      `${BACKEND_URL}/logs${queryString ? `?${queryString}` : ''}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        // No caching — always fresh
+        cache: 'no-store',
+      }
+    );
+
+    if (!backendRes.ok) {
+      const errorText = await backendRes.text();
+      return NextResponse.json(
+        { error: 'Failed to fetch logs from backend', details: errorText },
+        { status: backendRes.status }
+      );
+    }
+
+    const data = await backendRes.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Error in GET /api/logs:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}

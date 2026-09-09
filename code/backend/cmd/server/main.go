@@ -81,6 +81,7 @@ func main() {
 	})
 	app.POST("/user", apiCfg.HandlerUser)
 	app.POST("/log", auth.MiddlewareAuth(apiCfg.LogHandler))
+	app.GET("/logs", auth.MiddlewareAuth(apiCfg.GetUserLogsHandler))
 	app.GET("/parsers", apiCfg.ListParsersHandler)
 	app.GET("/parsers/:id", apiCfg.GetParserHandler)
 	app.PATCH("/parsers/:id", apiCfg.UpdateParserHandler)
