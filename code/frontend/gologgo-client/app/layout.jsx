@@ -3,8 +3,8 @@ import { Toaster } from 'sonner'
 import './globals.css'
 
 export const metadata = {
-  title: 'Log.AI — Log Processing Dashboard',
-  description: 'Monitor, parse, and normalize your application logs with Log.AI.',
+  title: 'GoLogGo — Log Processing Dashboard',
+  description: 'Monitor, parse, and normalize your application logs with GoLogGo.',
   generator: 'v0.app',
   icons: {
     icon: [

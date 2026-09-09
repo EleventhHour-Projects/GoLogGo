@@ -1,5 +1,6 @@
 code/backend/.env
 code/ml/.env
+code/frontend/gologgo-client/.env
 *.exe
 *.exe~
 *.dll
@@ -9,4 +10,4 @@ bin/
 venv/
 .venv/
 __pycache__/
-*.py[cod]
+*.py[cod]
