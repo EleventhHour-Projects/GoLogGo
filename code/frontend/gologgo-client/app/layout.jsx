@@ -1,4 +1,5 @@
 import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 export const metadata = {
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="antialiased" suppressHydrationWarning>
         {children}
+        <Toaster richColors position="bottom-right" />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
