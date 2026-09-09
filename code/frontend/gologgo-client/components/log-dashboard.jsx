@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -66,14 +67,14 @@ export function LogDashboard() {
       });
       if (res.ok) {
         setRawLogs('');
-        alert('Logs successfully sent for processing!');
+        toast.success('Logs successfully sent for processing!');
       } else {
         const errorData = await res.json().catch(() => ({}));
-        alert(`Failed to process logs: ${errorData.error || 'Unknown error'}`);
+        toast.error(`Failed to process logs: ${errorData.error || 'Unknown error'}`);
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred while sending logs.');
+      toast.error('An error occurred while sending logs.');
     } finally {
       setIsProcessing(false);
     }

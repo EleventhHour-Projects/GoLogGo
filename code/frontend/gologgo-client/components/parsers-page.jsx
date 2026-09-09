@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -241,7 +242,7 @@ export function ParsersPage() {
       }
       setEditingParser(null)
     } catch (err) {
-      alert(`Error updating parser: ${err.message}`)
+      toast.error(`Error updating parser: ${err.message}`)
     } finally {
       setSavingEdit(false)
     }
@@ -251,7 +252,7 @@ export function ParsersPage() {
   const handleCreateParser = async (e) => {
     e.preventDefault()
     if (!createForm.pattern) {
-      alert('Regex pattern is required')
+      toast.error('Regex pattern is required')
       return
     }
     setCreating(true)
@@ -278,7 +279,7 @@ export function ParsersPage() {
       setCreateForm({ name: '', format: '', pattern: '', sampleLog: '', status: 'Active' })
       fetchParsers(true)
     } catch (err) {
-      alert(`Error creating parser: ${err.message}`)
+      toast.error(`Error creating parser: ${err.message}`)
     } finally {
       setCreating(false)
     }
