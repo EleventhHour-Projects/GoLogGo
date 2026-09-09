@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
+    const rawText = await request.text();
 
     // Get the JWT from the HttpOnly cookie
     const cookieStore = await cookies();
@@ -20,13 +20,13 @@ export async function POST(request) {
     }
 
     // Send the logs to the Go backend
-    const backendRes = await fetch(`${BACKEND_URL}/logs`, {
+    const backendRes = await fetch(`${BACKEND_URL}/log`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(body),
+      body: rawText,
     });
 
     if (!backendRes.ok) {
