@@ -204,6 +204,20 @@ func TestParseLog_Transformations(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:        "integer",
+			input:       "001204",
+			trans:       Transformation{Type: "integer"},
+			expected:    "1204",
+			expectError: false,
+		},
+		{
+			name:        "float",
+			input:       "249.990",
+			trans:       Transformation{Type: "float"},
+			expected:    "249.99",
+			expectError: false,
+		},
+		{
 			name:        "datetime with Go layout",
 			input:       "2026-09-05 18:30:21",
 			trans:       Transformation{Type: "datetime", Format: "2006-01-02 15:04:05"},

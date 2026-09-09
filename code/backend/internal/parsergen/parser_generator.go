@@ -141,6 +141,7 @@ func (pg *ParserGenerator) ProcessMessage(ctx context.Context, body []byte) erro
 		}
 
 		doc := database.ParserDoc{
+			Name:            newParser.Name,
 			Hash:            msg.Hash,
 			Pattern:         newParser.Pattern,
 			Mapping:         newParser.Mapping,

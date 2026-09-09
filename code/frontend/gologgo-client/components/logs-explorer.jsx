@@ -86,6 +86,8 @@ export function LogsExplorer() {
   // Filter / pagination state
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [parserFilter, setParserFilter] = useState('all')
+  const [parserOptions, setParserOptions] = useState([{ value: 'all', label: 'All Parsers' }])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 
@@ -138,6 +140,24 @@ export function LogsExplorer() {
   // Initial load
   useEffect(() => { fetchLogs() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    fetch('/api/parsers', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        const parsers = data?.parsers ?? data ?? []
+        setParserOptions([
+          { value: 'all', label: 'All Parsers' },
+          ...parsers
+            .map((parser) => ({
+              value: parser.hash || parser.name,
+              label: parser.name || parser.hash,
+            }))
+            .filter((parser) => parser.value),
+        ])
+      })
+      .catch(() => setParserOptions([{ value: 'all', label: 'All Parsers' }]))
+  }, [])
+
   // Re-fetch on filter/page change (skip on mount, handled above)
   useEffect(() => {
     fetchLogs({ page: currentPage, limit: pageSize, status: statusFilter })
@@ -150,21 +170,24 @@ export function LogsExplorer() {
   const clearFilters = () => {
     setSearch('')
     setStatusFilter('all')
+    setParserFilter('all')
     setCurrentPage(1)
   }
 
   // Client-side search on the current page results (search within payload text)
   const filtered = useMemo(() => {
-    if (!search.trim()) return requests
+    if (!search.trim() && parserFilter === 'all') return requests
     const q = search.toLowerCase()
     return requests.filter((r) => {
       const payloadMatch = r.payload?.toLowerCase().includes(q)
       const idMatch = r.id?.toLowerCase().includes(q)
       const statusMatch = r.status?.toLowerCase().includes(q)
       const logsMatch = r.logs?.some?.((l) => JSON.stringify(l.normalizedLog).toLowerCase().includes(q))
-      return payloadMatch || idMatch || statusMatch || logsMatch
+      const parserMatch = parserFilter === 'all' || r.logs?.some?.((l) => l.hash === parserFilter)
+      const textMatch = !search.trim() || payloadMatch || idMatch || statusMatch || logsMatch
+      return textMatch && parserMatch
     })
-  }, [requests, search])
+  }, [requests, search, parserFilter])
 
   // ── Format helpers ─────────────────────────────────────────────────────────
 
@@ -299,6 +322,12 @@ export function LogsExplorer() {
                 onChange={(v) => { setStatusFilter(v); setCurrentPage(1) }}
                 options={statusOptions}
               />
+              <FilterSelect
+                label="Parser"
+                value={parserFilter}
+                onChange={(v) => { setParserFilter(v); setCurrentPage(1) }}
+                options={parserOptions}
+              />
               <button
                 onClick={clearFilters}
                 className="px-2 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
@@ -336,7 +365,7 @@ export function LogsExplorer() {
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-16 text-center text-sm text-muted-foreground">
                 <p>No logs found.</p>
-                {(search || statusFilter !== 'all') && (
+                {(search || statusFilter !== 'all' || parserFilter !== 'all') && (
                   <button onClick={clearFilters} className="text-xs underline">Clear filters</button>
                 )}
               </div>

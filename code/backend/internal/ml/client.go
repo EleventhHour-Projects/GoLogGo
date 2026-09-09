@@ -102,6 +102,7 @@ func GenerateDummyParser(rawLog string, features fingerprint.FingerprintFeatures
 	pattern5 := `^(?P<timestamp>\S+ \S+) (?P<severity>[A-Za-z]+) (?P<service>\S+) (?P<host>\S+) (?P<message>.*)$`
 	if re, err := regexp.Compile(pattern5); err == nil && re.MatchString(trimmed) {
 		return &parser.Parser{
+			Name:    "Generic Structured Log Parser",
 			Pattern: pattern5,
 			Mapping: map[string]string{
 				"timestamp": "timestamp",
@@ -127,6 +128,7 @@ func GenerateDummyParser(rawLog string, features fingerprint.FingerprintFeatures
 	pattern4 := `^(?P<timestamp>\S+) \[(?P<severity>[A-Za-z]+)\] \[(?P<service>\S+)\] (?P<message>.*)$`
 	if re, err := regexp.Compile(pattern4); err == nil && re.MatchString(trimmed) {
 		return &parser.Parser{
+			Name:    "Bracketed Service Log Parser",
 			Pattern: pattern4,
 			Mapping: map[string]string{
 				"timestamp": "timestamp",
@@ -150,6 +152,7 @@ func GenerateDummyParser(rawLog string, features fingerprint.FingerprintFeatures
 	pattern3 := `^(?P<timestamp>\S+ \S+) (?P<severity>[A-Za-z]+) (?P<message>.*)$`
 	if re, err := regexp.Compile(pattern3); err == nil && re.MatchString(trimmed) {
 		return &parser.Parser{
+			Name:    "Timestamp Severity Log Parser",
 			Pattern: pattern3,
 			Mapping: map[string]string{
 				"timestamp": "timestamp",

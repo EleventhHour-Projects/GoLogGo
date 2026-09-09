@@ -24,7 +24,8 @@ You MUST respond strictly with a valid JSON object matching this structure:
   "transformations": {
     "timestamp": { "type": "datetime", "format": "2006-01-02 15:04:05" },
     "severity": { "type": "uppercase" }
-  }
+    },
+    "name": "Nginx Access Log Parser"
 }
 
 CRITICAL RULES:
@@ -35,8 +36,9 @@ CRITICAL RULES:
    - If a field is a timestamp/date/time, set `type` to "datetime" and provide a Go layout format string in `format` (e.g. "2006-01-02 15:04:05", "Jan _2 15:04:05", RFC3339).
    - If a field is severity or level, set `type` to "uppercase".
    - If a field is numeric, set `type` to "integer" or "float".
-5. Do NOT hardcode dynamic values inside the regex; capture them generically.
-6. Return ONLY raw JSON. No markdown backticks (no ```json).
+5. "name" MUST be concise, human-readable, and describe the log source or format. Do not use generic names like "Parser" or hash values.
+6. Do NOT hardcode dynamic values inside the regex; capture them generically.
+7. Return ONLY raw JSON. No markdown backticks (no ```json).
 """
 
 class RuleSynthesizer:
