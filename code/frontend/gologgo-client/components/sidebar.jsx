@@ -1,7 +1,8 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { CircleHelp, FileJson, LayoutDashboard, ListFilter, TerminalSquare, X } from 'lucide-react'
+import { CircleHelp, FileJson, LayoutDashboard, ListFilter, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const navItems = [
@@ -14,15 +15,34 @@ const navItems = [
 export function Sidebar({ onClose }) {
   const router = useRouter()
   const pathname = usePathname()
+  const [profile, setProfile] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((response) => {
+        if (response.status === 401) {
+          window.location.href = '/login'
+          return null
+        }
+        return response.ok ? response.json() : null
+      })
+      .then(setProfile)
+      .catch(() => setProfile(null))
+  }, [])
+
+  const initials = profile?.name
+    ?.split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col border-r border-border bg-sidebar px-3 py-4">
       <div className="mb-8 flex items-center justify-between px-3">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <TerminalSquare className="size-4" />
-          </span>
-          <span className="font-mono text-sm font-semibold tracking-tight">LOG.AI</span>
+          <img src="/logo.png" alt="GoLogGo logo" className="size-9 object-contain" />
+          <span className="font-mono text-sm font-semibold tracking-tight">GoLogGo</span>
         </div>
         {onClose && (
           <Button variant="ghost" size="icon" className="size-8 md:hidden" onClick={onClose} aria-label="Close menu">
@@ -53,14 +73,18 @@ export function Sidebar({ onClose }) {
       <div className="mt-auto flex flex-col gap-1">
         <div className="mt-3 flex items-center justify-between border-t border-border px-3 pt-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent font-mono text-xs text-muted-foreground">JD</div>
+            <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent font-mono text-xs text-muted-foreground">
+              {profile?.picture ? <img src={profile.picture} alt="" className="size-full object-cover" /> : initials || '...'}</div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium">Jordan Davis</p>
-              <p className="truncate text-xs text-muted-foreground">jordan@log.ai</p>
+              <p className="truncate text-sm font-medium">{profile?.name || 'Loading...'}</p>
+              <p className="truncate text-xs text-muted-foreground">{profile?.email || ''}</p>
             </div>
           </div>
           <button
-            onClick={() => (window.location.href = '/login')}
+            onClick={async () => {
+              await fetch('/api/auth/logout', { method: 'POST' })
+              window.location.href = '/login'
+            }}
             className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
             title="Log out"
             aria-label="Log out"

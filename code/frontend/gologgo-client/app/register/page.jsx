@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { TerminalSquare, Mail, Lock, User } from 'lucide-react'
+import { Mail, Lock, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -12,17 +12,15 @@ export default function RegisterPage() {
       <div className="absolute top-4 right-4"><ThemeToggle /></div>
       
       <div className="w-full max-w-[400px] flex flex-col items-center">
-        <div className="mb-8 flex items-center gap-2.5">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <TerminalSquare className="size-5" />
-          </div>
-          <span className="font-mono text-xl font-semibold tracking-tight">LOG.AI</span>
+        <div className="mb-8 flex items-center gap-3">
+          <img src="/logo.png" alt="GoLogGo logo" className="size-20 object-contain" />
+          <span className="font-mono text-3xl font-bold tracking-tight">GoLogGo</span>
         </div>
 
         <div className="w-full rounded-xl border border-border bg-card p-8 shadow-sm">
           <div className="mb-6 flex flex-col items-center text-center">
             <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
-            <p className="text-sm text-muted-foreground mt-2">Enter your details to get started with Log.AI</p>
+            <p className="text-sm text-muted-foreground mt-2">Enter your details to get started with GoLogGo</p>
           </div>
 
           <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); window.location.href = '/' }}>
