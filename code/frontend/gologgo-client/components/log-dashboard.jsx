@@ -55,22 +55,30 @@ export function LogDashboard() {
 
   const handleClearLogs = () => setRawLogs('')
   const handleProcessLogs = async () => {
-    if (!rawLogs.trim()) return;
+    const logLines = rawLogs
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+
+    if (logLines.length === 0) return
     setIsProcessing(true);
     try {
-      const res = await fetch('/api/logs', {
+      const responses = await Promise.all(logLines.map((line) => fetch('/api/logs', {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain'
         },
-        body: rawLogs
-      });
-      if (res.ok) {
+        body: line
+      })))
+
+      const failedResponse = responses.find((response) => !response.ok)
+      if (!failedResponse) {
         setRawLogs('');
-        toast.success('Logs successfully sent for processing!');
+        toast.success(`${logLines.length} log${logLines.length === 1 ? '' : 's'} sent for processing!`);
       } else {
-        const errorData = await res.json().catch(() => ({}));
-        toast.error(`Failed to process logs: ${errorData.error || 'Unknown error'}`);
+        const errorData = await failedResponse.json().catch(() => ({}))
+        const successfulCount = responses.length - responses.filter((response) => !response.ok).length
+        toast.error(`Processed ${successfulCount}/${logLines.length} logs. ${errorData.error || 'Some logs failed.'}`)
       }
     } catch (err) {
       console.error(err);

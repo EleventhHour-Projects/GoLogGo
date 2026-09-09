@@ -162,6 +162,20 @@ func applyTransformation(value string, t Transformation) (string, error) {
 	case "trim", "trim_space":
 		return strings.TrimSpace(value), nil
 
+	case "integer", "int":
+		number, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid integer value %q: %w", value, err)
+		}
+		return strconv.FormatInt(number, 10), nil
+
+	case "float", "decimal", "number":
+		number, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid float value %q: %w", value, err)
+		}
+		return strconv.FormatFloat(number, 'f', -1, 64), nil
+
 	case "datetime", "date", "timestamp", "time":
 		return parseAndFormatDateTime(value, t.Format)
 

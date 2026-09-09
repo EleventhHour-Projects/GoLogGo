@@ -16,6 +16,7 @@ type NormalizedLog struct {
 }
 
 type Parser struct {
+	Name            string                    `json:"name,omitempty" bson:"name,omitempty"`
 	Pattern         string                    `json:"pattern" bson:"pattern"`
 	Mapping         map[string]string         `json:"mapping" bson:"mapping"`
 	Transformations map[string]Transformation `json:"transformations,omitempty" bson:"transformations,omitempty"`

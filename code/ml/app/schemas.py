@@ -21,6 +21,9 @@ class Transformation(BaseModel):
 class RuleGeneratorOutput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    name: str = Field(
+        description="Concise human-readable name for the parser, describing the log source or format"
+    )
     pattern: str = Field(
         description="Named capture group regex matching the whole log string, e.g. ^(?<timestamp>\\S+ \\S+) (?<severity>\\w+) ...$"
     )
