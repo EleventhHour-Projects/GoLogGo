@@ -28,6 +28,9 @@ func ParseLog(rawLog string, p *Parser) (*NormalizedLog, error) {
 	if match == nil {
 		return nil, fmt.Errorf("log does not match parser pattern")
 	}
+	if match[0] != rawLog {
+		return nil, fmt.Errorf("log does not fully match parser pattern")
+	}
 
 	fields := extractFields(re, match)
 

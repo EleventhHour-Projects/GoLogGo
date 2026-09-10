@@ -88,6 +88,20 @@ func TestKVEquivalence(t *testing.T) {
 	}
 }
 
+func TestKVFormattingEquivalence(t *testing.T) {
+	log1 := `user=alice action=login source=10.0.0.1`
+	log2 := `user="bob", action="login", source="192.168.1.2"`
+
+	features1 := ExtractFingerprintFeatures(log1)
+	features2 := ExtractFingerprintFeatures(log2)
+	hash1 := GenerateFingerprintHash(features1)
+	hash2 := GenerateFingerprintHash(features2)
+
+	if hash1 != hash2 {
+		t.Fatalf("expected equivalent KV formatting to produce the same hash, got %s and %s (%s vs %s)", hash1, hash2, CanonicalRepresentation(features1), CanonicalRepresentation(features2))
+	}
+}
+
 // TestSyslogRFC5424Equivalence verifies RFC 5424 syslog logs.
 func TestSyslogRFC5424Equivalence(t *testing.T) {
 	log1 := `<165>1 2026-08-30T13:02:11.003Z myhost.example.com myapp 1234 ID47 [exampleSDID@32473 iut="3" eventSource="Application"] User 10.0.0.1 authenticated`

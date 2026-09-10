@@ -53,6 +53,22 @@ func TestParseLog_BasicExample(t *testing.T) {
 	}
 }
 
+func TestParseLog_RejectsTrailingInput(t *testing.T) {
+	p := &Parser{Pattern: `^(?P<severity>\w+) (?P<message>.*)$`, Mapping: map[string]string{
+		"severity": "severity",
+		"message":  "message",
+	}}
+
+	if _, err := ParseLog("INFO message trailing", p); err != nil {
+		t.Fatalf("expected a valid full-line match, got %v", err)
+	}
+
+	anchoredParser := &Parser{Pattern: `^INFO$`, Mapping: map[string]string{}}
+	if _, err := ParseLog("INFO unexpected", anchoredParser); err == nil {
+		t.Fatal("expected trailing input to be rejected")
+	}
+}
+
 func TestParseLog_ExtractedFieldTransformationKey(t *testing.T) {
 	// Raw log with lowercase severity and raw_time field
 	rawLog := "raw_time=2026-09-05 18:30:21 raw_sev=warn msg=something happened"

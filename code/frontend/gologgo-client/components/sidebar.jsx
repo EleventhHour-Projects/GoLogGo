@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { CircleHelp, FileJson, LayoutDashboard, ListFilter, X } from 'lucide-react'
+import { FileJson, LayoutDashboard, ListFilter, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/' },
   { label: 'Logs', icon: ListFilter, href: '/logs' },
-  { label: 'Unknown Logs', icon: CircleHelp, href: '/unknown-logs' },
   { label: 'Parsers', icon: FileJson, href: '/parsers' },
 ]
 

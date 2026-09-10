@@ -6,6 +6,7 @@ import (
 
 	"github.com/EleventhHour-Projects/GoLogGo/code/backend/internal/auth"
 	"github.com/nottechdm/notnet/pkg/notnet"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // GetUserLogsHandler returns paginated requests + stats for the authenticated user.
@@ -80,5 +81,37 @@ func (api *Config) GetUserLogsHandler(req *notnet.Request, res *notnet.Response,
 		"page":       page,
 		"limit":      limit,
 		"totalPages": (total + limit - 1) / limit,
+	})
+}
+
+// GetUserLogHandler returns the original request and its parsed log entries.
+// GET /logs/:id
+func (api *Config) GetUserLogHandler(req *notnet.Request, res *notnet.Response, claims *auth.CustomClaims) error {
+	requestID, err := bson.ObjectIDFromHex(req.Param("id"))
+	if err != nil {
+		return res.JSON(http.StatusBadRequest, map[string]string{"error": "invalid log id"})
+	}
+
+	ctx := req.HTTPRequest.Context()
+	storedReq, err := api.Reqs.GetUserRequestByID(ctx, claims.UserID, requestID)
+	if err != nil {
+		return res.JSON(http.StatusNotFound, map[string]string{"error": "log not found"})
+	}
+
+	logs, err := api.Reqs.GetLogsByReqID(ctx, requestID)
+	if err != nil {
+		return res.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to fetch log details"})
+	}
+
+	return res.JSON(http.StatusOK, map[string]interface{}{
+		"request": map[string]interface{}{
+			"id":        storedReq.ID.Hex(),
+			"payload":   string(storedReq.Payload),
+			"status":    storedReq.Status,
+			"attempts":  storedReq.Attempts,
+			"createdAt": storedReq.CreatedAt,
+			"updatedAt": storedReq.UpdatedAt,
+		},
+		"logs": logs,
 	})
 }

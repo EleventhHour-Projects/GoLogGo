@@ -59,6 +59,19 @@ func (m *MongoDB) GetUserRequests(
 	return reqs, total, cursor.Err()
 }
 
+// GetUserRequestByID returns one request only when it belongs to the user.
+func (m *MongoDB) GetUserRequestByID(ctx context.Context, userID, reqID bson.ObjectID) (*Req, error) {
+	var req Req
+	err := m.Collections[CollectionRequests].FindOne(ctx, bson.M{
+		"_id":    reqID,
+		"userId": userID,
+	}).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	return &req, nil
+}
+
 // GetLogsByReqID returns all parsed log entries for a given request ID.
 func (m *MongoDB) GetLogsByReqID(ctx context.Context, reqID bson.ObjectID) ([]Log, error) {
 	col := m.Collections[CollectionLogs]
