@@ -110,24 +110,21 @@ GoLogGo/
 The final SIH presentation is included in the repository.
 
 You can find the presentation in:
-
-`submission/PRESENTATION.pptx`
+[submission/PRESENTATION.pdf](https://github.com/EleventhHour-Projects/GoLogGo/blob/main/submission/PRESENTATION.pdf)
 
 ## 10. Demo Video
 
 The project demonstration video is included in the repository documentation.
 
 The YouTube link is available in:
-
-`submission/DEMO.md`
+[submission/DEMO.md](https://github.com/EleventhHour-Projects/GoLogGo/blob/main/submission/DEMO.md)
 
 Direct Link : [Youtube](https://www.youtube.com/watch?v=V8vLanBAm0E)
 
 ## 11. Screenshots / Prototype Photos
 
 Important project screenshots and prototype photos are included in:
-
-`assets/screenshots/`
+[assets/screenshot/](https://github.com/EleventhHour-Projects/GoLogGo/blob/main/assets/screenshot/)
 
 These include relevant screenshots of the project, system interface, and implementation.
 
