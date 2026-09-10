@@ -113,8 +113,6 @@ You can find the presentation in:
 
 `submission/PRESENTATION.pptx`
 
-If the PPT is too large for GitHub, an accessible Google Drive or OneDrive link is provided in `submission/PRESENTATION.md`.
-
 ## 10. Demo Video
 
 The project demonstration video is included in the repository documentation.
