@@ -17,8 +17,8 @@ RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /bin/server /app/server
 
-EXPOSE 8080
+EXPOSE 9000
 
-ENV PORT=8080
+ENV PORT=9000
 
 CMD ["/app/server"]

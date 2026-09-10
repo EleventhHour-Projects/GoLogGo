@@ -95,11 +95,15 @@ func main() {
 	fmt.Println("GoLogGo backend started successfully")
 	fmt.Printf("Redis connected: %v\n", os.Getenv("REDIS_URL"))
 	fmt.Printf("RabbitMQ connected: %v\n", os.Getenv("RABBITMQ_URL"))
-	log.Println("API server starting on :8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "9000"
+	}
+	log.Printf("API server starting on :%s", port)
 
 	serverErrCh := make(chan error, 1)
 	go func() {
-		serverErrCh <- app.Listen(":8080")
+		serverErrCh <- app.Listen(":" + port)
 	}()
 
 	sigCh := make(chan os.Signal, 1)

@@ -14,7 +14,7 @@ services:
     env_file:
       - ./code/backend/.env
     ports:
-      - "8080:8080"
+      - "9000:9000"
     restart: unless-stopped
 
   ml:
@@ -25,9 +25,9 @@ services:
     env_file:
       - ./code/ml/.env
     ports:
-      - "8000:8000"
+      - "9001:9001"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9001/health')"]
       interval: 10s
       timeout: 5s
       retries: 5
