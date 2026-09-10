@@ -1,5 +1,2 @@
 # Demo Video
-
-The project demonstration video will be linked here before submission.
-
-**Demo link:** To be added
+[https://www.youtube.com/watch?v=V8vLanBAm0E](https://www.youtube.com/watch?v=V8vLanBAm0E)
