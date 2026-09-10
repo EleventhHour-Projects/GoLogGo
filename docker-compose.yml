@@ -57,7 +57,7 @@ services:
     env_file:
       - ./code/backend/.env
     ports:
-      - "6379:6379"
+      - "6380:6379"
     command: ["redis-server", "--appendonly", "yes", "--protected-mode", "no"]
     volumes:
       - redis_data:/data
