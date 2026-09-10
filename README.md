@@ -34,9 +34,9 @@ GoLogGo is a universal event processing and normalization platform for ingesting
 
 ## Project Links
 
-- **SIH Presentation:** TODO
-- **Video Demonstration:** TODO
-- **Live Deployment:** TODO
+- **SIH Presentation:** [Google Slide](https://docs.google.com/presentation/d/1_haa_mS1xu-KFTgadAcaJITEoES4WVFp/edit?slide=id.p6#slide=id.p6)
+- **Video Demonstration:** [Youtube](https://www.youtube.com/watch?v=V8vLanBAm0E)
+- **Live Deployment:** [go-log-go.vercel.app](https://go-log-go.vercel.app/)
 - **Source Code:** [GitHub Repository](https://github.com/EleventhHour-Projects/GoLogGo/tree/main/code)
 
 ## 3. Problem Statement
@@ -110,22 +110,21 @@ GoLogGo/
 The final SIH presentation is included in the repository.
 
 You can find the presentation in:
-
-`submission/PRESENTATION.pptx`
+[submission/PRESENTATION.pptx](https://github.com/EleventhHour-Projects/GoLogGo/blob/main/submission/PRESENTATION.pptx)
 
 ## 10. Demo Video
 
 The project demonstration video is included in the repository documentation.
 
 The YouTube link is available in:
+[submission/DEMO.md](https://github.com/EleventhHour-Projects/GoLogGo/blob/main/submission/DEMO.md)
 
-`submission/DEMO.md`
+Direct Link : [Youtube](https://www.youtube.com/watch?v=V8vLanBAm0E)
 
 ## 11. Screenshots / Prototype Photos
 
 Important project screenshots and prototype photos are included in:
-
-`assets/screenshots/`
+[assets/screenshot/](https://github.com/EleventhHour-Projects/GoLogGo/blob/main/assets/screenshot/)
 
 These include relevant screenshots of the project, system interface, and implementation.
 
