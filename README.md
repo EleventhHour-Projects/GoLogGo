@@ -34,7 +34,7 @@ GoLogGo is a universal event processing and normalization platform for ingesting
 
 ## Project Links
 
-- **SIH Presentation:** TODO
+- **SIH Presentation:** [Google Slide](https://docs.google.com/presentation/d/1S_kOCHm3-zEMvBT2UartI65rZLeR0Gbs/edit?usp=drive_link&ouid=114742255272485783839&rtpof=true&sd=true)
 - **Video Demonstration:** [Youtube](https://www.youtube.com/watch?v=V8vLanBAm0E)
 - **Live Deployment:** [go-log-go.vercel.app](https://go-log-go.vercel.app/)
 - **Source Code:** [GitHub Repository](https://github.com/EleventhHour-Projects/GoLogGo/tree/main/code)
