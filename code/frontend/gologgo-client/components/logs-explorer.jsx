@@ -4,9 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Sidebar } from '@/components/sidebar'
 import { useRouter } from 'next/navigation'
 import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clock3,
+  Database,
   Menu,
   RefreshCw,
   Search,
@@ -30,7 +35,7 @@ const STATUS_META = {
 function StatusPill({ status }) {
   const meta = STATUS_META[status] ?? { label: status, color: 'text-muted-foreground', dot: 'bg-muted-foreground', pulse: false }
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${meta.color}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full border border-current/15 bg-current/5 px-2 py-1 text-[11px] font-medium ${meta.color}`}>
       <span className={`size-1.5 rounded-full ${meta.dot} ${meta.pulse ? 'animate-pulse' : ''}`} />
       {meta.label}
     </span>
@@ -58,11 +63,15 @@ function FilterSelect({ label, value, onChange, options }) {
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, colorClass = 'text-foreground' }) {
+function StatCard({ label, value, colorClass = 'text-foreground', Icon = Activity }) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg border border-border bg-card/40 px-4 py-3">
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className={`font-mono text-xl font-medium ${colorClass}`}>{value ?? '—'}</p>
+    <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card/45 px-4 py-3.5 transition-colors hover:border-border hover:bg-card/75">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+        <Icon className={`size-4 ${colorClass} opacity-70 transition-opacity group-hover:opacity-100`} />
+      </div>
+      <p className={`mt-2 font-mono text-2xl font-medium tracking-tight ${colorClass}`}>{value ?? '—'}</p>
+      <span className={`absolute inset-x-0 bottom-0 h-px ${colorClass.replace('text-', 'bg-')} opacity-40`} />
     </div>
   )
 }
@@ -200,6 +209,20 @@ export function LogsExplorer() {
     } catch { return iso }
   }
 
+  const formatDate = (iso) => {
+    if (!iso) return '—'
+    try {
+      return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    } catch { return iso }
+  }
+
+  const formatClock = (iso) => {
+    if (!iso) return '—'
+    try {
+      return new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+    } catch { return '' }
+  }
+
   const trimPayload = (payload, len = 80) => {
     if (!payload) return '—'
     const first = payload.split('\n')[0].trim()
@@ -274,8 +297,8 @@ export function LogsExplorer() {
                 <Menu />
               </Button>
               <div>
-                <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Workspace</p>
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight">Logs</h1>
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary/80">Workspace / Activity</p>
+                <h1 className="mt-1 text-3xl font-semibold tracking-tight">Logs</h1>
                 <p className="mt-1 text-sm text-muted-foreground">Browse and investigate your submitted log events</p>
               </div>
             </div>
@@ -296,23 +319,23 @@ export function LogsExplorer() {
 
           {/* ── Stats ── */}
           <section aria-label="Log request metrics" className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <StatCard label="Total"          value={stats?.total}         />
-            <StatCard label="Pending"        value={stats?.pending}        colorClass="text-amber-400" />
-            <StatCard label="Processing"     value={stats?.processing}     colorClass="text-blue-400" />
-            <StatCard label="Waiting Parser" value={stats?.waitingParser}  colorClass="text-violet-400" />
-            <StatCard label="Completed"      value={stats?.completed}      colorClass="text-emerald-400" />
-            <StatCard label="Failed"         value={stats?.failed}         colorClass="text-destructive" />
+            <StatCard label="Total"          value={stats?.total}         Icon={Database} />
+            <StatCard label="Pending"        value={stats?.pending}        colorClass="text-amber-400" Icon={Clock3} />
+            <StatCard label="Processing"     value={stats?.processing}     colorClass="text-blue-400" Icon={Activity} />
+            <StatCard label="Waiting Parser" value={stats?.waitingParser}  colorClass="text-violet-400" Icon={Clock3} />
+            <StatCard label="Completed"      value={stats?.completed}      colorClass="text-emerald-400" Icon={CheckCircle2} />
+            <StatCard label="Failed"         value={stats?.failed}         colorClass="text-destructive" Icon={AlertTriangle} />
           </section>
 
           {/* ── Filters ── */}
-          <section aria-label="Log filters" className="mb-5 flex flex-col gap-3 rounded-lg border border-border bg-card/40 p-3">
+          <section aria-label="Log filters" className="mb-5 flex flex-col gap-3 rounded-xl border border-border/80 bg-card/35 p-3 shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)]">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by payload, ID, or log fields…"
-                className="h-9 border-input bg-background pl-9 text-sm"
+                className="h-10 border-input/80 bg-background/70 pl-9 text-sm shadow-inner placeholder:text-muted-foreground/60"
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -338,10 +361,10 @@ export function LogsExplorer() {
           </section>
 
           {/* ── Table ── */}
-          <section className="overflow-hidden rounded-lg border border-border bg-card/20">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <section className="overflow-hidden rounded-xl border border-border/80 bg-card/25 shadow-[0_18px_60px_-45px_rgba(0,0,0,0.95)]">
+            <div className="flex items-center justify-between border-b border-border/80 px-5 py-4">
               <div>
-                <h2 className="text-sm font-medium">Your Log Requests</h2>
+                <h2 className="text-sm font-semibold tracking-tight">Your Log Requests</h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {loading ? 'Loading…' : `${totalCount.toLocaleString()} request${totalCount !== 1 ? 's' : ''} found`}
                 </p>
@@ -371,14 +394,14 @@ export function LogsExplorer() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-[780px] table-fixed lg:min-w-0">
                   <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="pl-4 w-40">Submitted At</TableHead>
-                      <TableHead className="min-w-72">Payload Preview</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-20 text-center">Attempts</TableHead>
-                      <TableHead className="w-28">Parsed Logs</TableHead>
+                    <TableRow className="border-border/80 bg-muted/10 hover:bg-muted/10">
+                      <TableHead className="w-36 pl-5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Submitted At</TableHead>
+                      <TableHead className="w-auto text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Payload Preview</TableHead>
+                      <TableHead className="w-32 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Status</TableHead>
+                      <TableHead className="w-20 text-center text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Attempts</TableHead>
+                      <TableHead className="w-28 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Parsed Logs</TableHead>
                       <TableHead className="w-8 pr-4" />
                     </TableRow>
                   </TableHeader>
@@ -387,23 +410,24 @@ export function LogsExplorer() {
                       <TableRow
                         key={req.id}
                         tabIndex={0}
-                        className="cursor-pointer transition-colors hover:bg-accent/50"
+                        className="group cursor-pointer border-border/60 transition-colors hover:bg-accent/35 focus-visible:bg-accent/40 focus-visible:outline-none"
                         onClick={() => router.push(`/logs/${req.id}`)}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') router.push(`/logs/${req.id}`) }}
                       >
-                        <TableCell className="pl-4 font-mono text-xs text-muted-foreground">
-                          {formatTime(req.createdAt)}
+                        <TableCell className="py-3 pl-5 align-middle text-xs text-muted-foreground">
+                          <span className="block whitespace-nowrap font-medium text-foreground/75">{formatDate(req.createdAt)}</span>
+                          <span className="mt-0.5 block whitespace-nowrap font-mono text-[11px] text-muted-foreground">{formatClock(req.createdAt)}</span>
                         </TableCell>
-                        <TableCell className="text-xs text-foreground">
-                          <span className="font-mono">{trimPayload(req.payload)}</span>
+                        <TableCell className="max-w-0 py-3 text-sm text-foreground">
+                          <span className="block truncate font-mono text-[12px] leading-5 text-foreground/90 group-hover:text-foreground">{trimPayload(req.payload, 140)}</span>
                         </TableCell>
                         <TableCell>
                           <StatusPill status={req.status} />
                         </TableCell>
-                        <TableCell className="text-center font-mono text-xs text-muted-foreground">
+                        <TableCell className="py-3 text-center font-mono text-sm text-muted-foreground">
                           {req.attempts}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-3">
                           {req.logs != null ? (
                             <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 font-mono text-[10px]">
                               {req.logs.length} log{req.logs.length !== 1 ? 's' : ''}
@@ -412,7 +436,7 @@ export function LogsExplorer() {
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="pr-4 text-right text-muted-foreground">›</TableCell>
+                        <TableCell className="pr-5 text-right text-muted-foreground transition-transform group-hover:translate-x-0.5">›</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

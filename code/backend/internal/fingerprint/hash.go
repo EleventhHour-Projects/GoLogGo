@@ -47,10 +47,6 @@ func CanonicalRepresentation(feat FingerprintFeatures) string {
 
 	case FormatKeyValue:
 		if feat.KV != nil {
-			sb.WriteString("|sep=")
-			sb.WriteString(feat.KV.Separator)
-			sb.WriteString("|delim=")
-			sb.WriteString(feat.KV.Delimiter)
 			sb.WriteString("|fields=")
 			sb.WriteString(canonicalFieldSignatures(feat.KV.Fields))
 		} else {
