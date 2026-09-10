@@ -110,7 +110,7 @@ GoLogGo/
 The final SIH presentation is included in the repository.
 
 You can find the presentation in:
-[submission/PRESENTATION.pdf](https://github.com/EleventhHour-Projects/GoLogGo/blob/main/submission/PRESENTATION.pdf)
+[submission/PRESENTATION.pptx](https://github.com/EleventhHour-Projects/GoLogGo/blob/main/submission/PRESENTATION.pptx)
 
 ## 10. Demo Video
 
